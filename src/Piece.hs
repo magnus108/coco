@@ -3,5 +3,9 @@ module Piece
   )
 where
 
+
+import Control.Comonad
+import qualified ListZipper as LZ
+
 main :: IO ()
-main = putStrLn ""
+main = putStrLn "lol"
