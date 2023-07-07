@@ -1,5 +1,5 @@
 module ListZipper
-  ( ListZipper,
+  ( ListZipper (..),
     fromList,
     toList,
     backward,
@@ -8,14 +8,16 @@ module ListZipper
     rights,
     singleton,
     setFocus,
+    insert,
   )
 where
 
 import Control.Comonad
 import qualified Data.List.NonEmpty as NE
+import Prelude hiding (fromList, lefts, rights, toList)
 
 data ListZipper a = ListZipper [a] a [a]
-  deriving stock (Eq,Show, Functor, Foldable, Traversable)
+  deriving stock (Eq, Show, Functor, Foldable, Traversable)
 
 instance Comonad ListZipper where
   extract (ListZipper _ x _) = x
@@ -55,3 +57,6 @@ lefts (ListZipper ls _ _) = reverse ls
 
 rights :: ListZipper a -> [a]
 rights (ListZipper _ _ rs) = rs
+
+insert :: a -> ListZipper a -> ListZipper a
+insert y (ListZipper ls x rs) = ListZipper ls x (rs ++ [y])

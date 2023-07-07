@@ -7,9 +7,10 @@ common common-all
     build-depends:
         base >=4.16 && <5,
         comonad,
-        relude
+        relude,
     other-modules:
         Piece
+        ListZipper
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)
@@ -61,3 +62,4 @@ test-suite kata-test
     build-depends:
         , tasty
         , tasty-hunit
+        , tasty-quickcheck
