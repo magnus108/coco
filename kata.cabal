@@ -8,6 +8,7 @@ common common-all
         base >=4.16 && <5,
         comonad,
         relude,
+        containers,
     other-modules:
         Piece
         ListZipper
