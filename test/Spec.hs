@@ -48,7 +48,7 @@ genSequence = do
   shuffle (concat list)
 
 sequenceTests :: [(Sum Int, Sum Int)] -> Property
-sequenceTests = property . isSequence . move
+sequenceTests = property . lol1 . moves
 
 main :: IO ()
 main =
