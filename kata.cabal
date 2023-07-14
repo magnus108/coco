@@ -7,12 +7,16 @@ common common-all
     build-depends:
         base >=4.16 && <5,
         comonad,
+        streams,
         relude,
         containers,
+        adjunctions,
     other-modules:
         Piece
         ListZipper
         Conway
+        Fibo
+        Eac
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)
