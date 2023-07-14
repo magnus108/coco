@@ -14,10 +14,12 @@ import Control.Comonad
 import Control.Comonad.Store
 import qualified Control.Comonad.Traced as T
 import qualified Control.Comonad.Trans.Traced as Ta
+import Conway
 import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified ListZipper as LZ
+import Relude.Unsafe (read)
 
 -- Counting Valleys problem
 countValleys :: String -> Int
@@ -102,18 +104,6 @@ func2 = T.traced (\m -> getSum m ^ 2 - 2)
 func22 :: T.Traced [Sum Int] [Int]
 func22 = T.traced (fmap (T.runTraced func2))
 
-fibo :: T.Traced (Sum Int) Int -> Int
-fibo xs =
-  let prev2 = T.trace (Sum (-2)) xs
-      prev1 = T.trace (Sum (-1)) xs
-   in T.traces (\m -> if m == 0 then Sum 0 else if m == 1 then Sum 1 else Sum (prev2 + prev1)) xs
-
-withFibo :: T.Traced (Sum Int) (Int, Int)
-withFibo = liftW2 (,) const1 (extend fibo const1)
-
-const1 :: T.Traced (Sum Int) Int
-const1 = T.traced (\x -> getSum x)
-
 --
 -- lol :: T.Traced (Sum Int) Int
 -- lol = T.traced (\x -> getSum x)
@@ -172,6 +162,100 @@ homeIn JustRight = Sum 0
 homeIn TooHigh = Sum (-1)
 homeIn WayTooHigh = Sum (-3)
 
+homed :: T.Traced (Sum Int) (Distance, Sum Int)
+homed = extend wfix (go <$> Ta.listen (game 10))
+  where
+    go :: (Distance, Sum Int) -> T.Traced (Sum Int) (Distance, Sum Int) -> (Distance, Sum Int)
+    go a@(JustRight, _) _ = a
+    go (d, x) w = trace (show x) $ T.trace (homeIn d) w
+
+fibo :: T.Traced (Sum Int) Int -> Int
+fibo xs =
+  let prev2 = T.trace (Sum (-2)) xs
+      prev1 = T.trace (Sum (-1)) xs
+   in traceShowId $ prev1 + prev2
+
+withFibo :: Ta.Traced (Sum Int) (Int, Int)
+withFibo = liftW2 (,) const1 (extend wfix (go <$> const1))
+  where
+    go :: Int -> T.Traced (Sum Int) Int -> Int
+    go 0 w = 0
+    go 1 w = 1
+    go a w =
+      let prev2 = T.trace (Sum (-2)) w
+          prev1 = T.trace (Sum (-1)) w
+       in prev1 + prev2
+
+const1 :: T.Traced (Sum Int) Int
+const1 = T.traced (\x -> getSum x)
+
+----INGREDIENTS
+ingredientsOf :: String -> S.Set String
+ingredientsOf "string" = S.fromList ["wool"]
+ingredientsOf "sticks" = S.fromList ["wood"]
+ingredientsOf "bow" = S.fromList ["sticks", "string"]
+ingredientsOf "arrows" = S.fromList ["sticks", "feathers", "stone"]
+ingredientsOf "quiver" = S.fromList ["arrows", "bow"]
+ingredientsOf "torches" = S.fromList ["coal", "sticks"]
+ingredientsOf _ = mempty
+
+recipes :: Store (S.Set String) (S.Set String)
+recipes = store (foldMap ingredientsOf) mempty
+
+allDeps :: Store (S.Set String) (S.Set String)
+allDeps = extend wfix (go <$> recipes)
+  where
+    go :: S.Set String -> Store (S.Set String) (S.Set String) -> (S.Set String)
+    go deps _ | S.null deps = mempty
+    go deps rec = deps <> peek deps rec
+
+-- findFirst :: Eq a => [a] -> a -> [a]
+-- findFirst [] _ = []
+-- findFirst (y : ys) x
+-- \| x == y = [y]
+--  | otherwise = findFirst ys x
+
+-- sockMerchant
+-- pairs :: Store [Int] All
+-- pairs = store (\xs -> foldMap (\x -> All $ even $ length $ filter (== x) xs) xs) []
+
+pairIt :: Int -> M.Map Int (Sum Int)
+pairIt x = undefined
+
+lol = foldl' (\acc k -> M.insertWith (<>) k (Sum 1) acc) M.empty listsocks
+
+pairs :: Store (S.Set Int) (Maybe (Sum Int))
+pairs = store (foldMap (flip M.lookup lol)) mempty
+
+listsocks = [1, 2, 1, 2, 1, 3, 2, 3]
+
+-- allPairs :: Store [Int] [Int]
+-- allPairs = extend (\wa -> foldl' (\acc y -> _) (pos wa) (extract wa)) (pairs)
+
+-- allPairs :: Store (S.Set Int) (M.Map Int (Sum Int))
+-- allPairs = extend wfix (go <$> pairs)
+-- where
+--  go :: [Int] -> Store (S.Set Int) [Int] -> [Int]
+-- go [] _ = []
+-- go deps rec = deps <> peek deps rec
+
+-- go deps rec = _ (pos rec {- 1,2,1 socklist-}) (extract rec {-1,1,2,2,1,1-}) -- DEP er res som skal mindskes. POS SKAL BENYTTES Gerne mere
+--
+-- SUPER DIGIT
+
+superdigit :: Store [Int] Int
+superdigit = store (\x -> sum x) mempty
+
+superdigit2 :: Store [Int] Int
+superdigit2 = extend wfix (go <$> superdigit)
+  where
+    go :: Int -> Store [Int] Int -> Int
+    go x _ | x < 10 = x
+    go deps rec = peek (intToList deps) rec
+
+intToList :: Int -> [Int]
+intToList n = map (\c -> read [c]) (show n)
+
 main :: IO ()
 main = do
   let path = "UDUDDDDDUD" -- 01010
@@ -180,25 +264,40 @@ main = do
   let pathSequence = "URDL" -- LOOP
   let gg = xxx =>> (\x -> 2 + extract x)
   print "nono"
-  --  print $ T.runTraced (gg =>> nonOfThem =>> (T.traces (\a -> All (a > 2))) =>> extract . liftW2 (\x y -> x + y) xxx) (All True)
-  --  print $ extract $ liftW2 (\x y -> (x == y, x, y)) func func2 =>> next =>> next =>> next
-  --  print $ extract $ extend fibo $ extend fibo $ T.traced (\m -> getSum 1 + getSum 1)
-  {-
-  print $ T.trace (Sum 0) $ withFibo
-  print $ T.trace (Sum 1) $ withFibo
-  print $ T.trace (Sum 2) $ withFibo
-  print $ T.trace (Sum 3) $ withFibo
-  print $ T.trace (Sum 4) $ withFibo
-  print $ T.trace (Sum 5) $ withFibo
-  print $ T.trace (Sum 6) $ withFibo
-  print $ T.trace (Sum 7) $ withFibo
-  print $ T.trace (Sum 8) $ withFibo
-  print $ T.trace (Sum 9) $ withFibo
-  print $ T.trace (Sum 10) $ withFibo
-  print $ solution <$> problem
-  -}
-  print $ extract $ Ta.censor (\m -> Dual (getDual m ++ [L, L])) $ extend (T.trace (Dual [R, R, R])) $ Ta.listens (id) $ tZipper $ LZ.ListZipper [] 1 [2, 3, 4, 5]
+  print $ extract $ seek (S.fromList [1, 2, 3]) $ extend (\wa -> div (fromMaybe 0 (getSum <$> extract wa)) 2) pairs
+  print $ extract $ seek [9, 8, 7, 5] $ superdigit
+  print $ extract $ seek [9, 8, 7, 5] $ superdigit2
+  animateGrid startingGrid
 
+--  print $ extract $ seek [1, 2, 1] $ allPairs
+
+--  print $ T.runTraced (gg =>> nonOfThem =>> (T.traces (\a -> All (a > 2))) =>> extract . liftW2 (\x y -> x + y) xxx) (All True)
+--  print $ extract $ liftW2 (\x y -> (x == y, x, y)) func func2 =>> next =>> next =>> next
+--  print $ extract $ extend fibo $ extend fibo $ T.traced (\m -> getSum 1 + getSum 1)
+--  print $ T.trace (Sum 0) $ withFibo
+{-
+print $ T.trace (Sum 2) $ withFibo
+print $ T.trace (Sum 3) $ withFibo
+print $ T.trace (Sum 4) $ withFibo
+print $ T.trace (Sum 5) $ withFibo
+print $ T.trace (Sum 6) $ withFibo
+print $ T.trace (Sum 7) $ withFibo
+print $ T.trace (Sum 8) $ withFibo
+print $ T.trace (Sum 9) $ withFibo
+print $ T.trace (Sum 10) $ withFibo
+-}
+
+-- print $ peeks id $ extend (peek (S.fromList ["string", "bow"])) $ allDeps
+
+--  print $ T.trace 12 $ Ta.listen (game 15) =>> T.traces (homeIn . fst) =>> T.traces (homeIn . fst) =>> T.traces (homeIn . fst)
+--  print $ T.trace 20 $ homed
+
+-- print $ solution <$> problem
+
+{-
+print $ extract $ Ta.censor (\m -> Dual (getDual m ++ [L, L])) $ extend (T.trace (Dual [R, R, R])) $ Ta.listens (id) $ tZipper $ LZ.ListZipper [] 1 [2, 3, 4, 5]
+
+-}
 --  print $ extract $ extend (T.traces (\x -> homeIn x)) $ extend (T.traces (\x -> homeIn x)) $ game 2
 
 --  print (lol1 (traceShowId (moves [(Sum {getSum = 0}, Sum {getSum = 1}), (Sum {getSum = 1}, Sum {getSum = 0}), (Sum {getSum = -1}, Sum {getSum = 0}), (Sum {getSum = 0}, Sum {getSum = -1})])))
