@@ -17,6 +17,7 @@ common common-all
         Conway
         Fibo
         Eac
+        WordSearch2
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)
