@@ -32,10 +32,9 @@ checkWord grid = joint
     neighbours = experiment neighbourLocations grid
 
     joint :: [String]
-    joint = do
-      x <- currentCell
-      ys <- toList neighbours
-      filter (flip isPrefixOf "aaa") $ fmap (++ x) ys
+    joint = filter (flip isPrefixOf "eat") $ concat $ concat $ fmap (\x -> fmap (\ys -> fmap (\y -> traceShowId $ x ++ y) ys) (toList neighbours)) currentCell
+
+-- filter (flip isPrefixOf "eat") $ fmap (x ++) ys
 
 step :: Grid -> Grid
 step = extend checkWord
@@ -89,8 +88,10 @@ animateGrid grid =
     . foldMap Ap
     . intersperse (pure "|")
     . fmap (ZipList . lines . drawGrid 4)
-    . take 3
-    $ iterate step grid
+    $ [step grid]
+
+-- . take 3
+-- \$ iterate step grid
 
 -- find one word first
 -- Input: board = [["o","a","a","n"],["e","t","a","e"],["i","h","k","r"],["i","f","l","v"]], words = ["oath","pea","eat","rain"]
