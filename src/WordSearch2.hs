@@ -1,11 +1,15 @@
 module WordSearch2
   ( animateGrid,
     startingGrid,
+    printGrid,
+    nextGrid,
+    nextNextGrid,
   )
 where
 
 import Control.Comonad
 import Control.Comonad.Store
+import Data.List
 import qualified Data.Map.Strict as M
 import Data.String (lines, unlines)
 import Prelude hiding (lines, unlines)
@@ -32,12 +36,22 @@ checkWord grid = joint
     neighbours = experiment neighbourLocations grid
 
     joint :: [String]
-    joint = filter (flip isPrefixOf "eat") $ concat $ concat $ fmap (\x -> fmap (\ys -> fmap (\y -> traceShowId $ x ++ y) ys) (toList neighbours)) currentCell
+    joint = do
+      x <- currentCell
+      xs <- toList neighbours
+      -- (filter (flip isSubsequenceOf "eat") xs) ++ (filter (flip isPrefixOf "eat") $ fmap (x ++) xs)
+      (filter (flip isSubsequenceOf "eat") $ x : fmap (x ++) xs)
 
 -- filter (flip isPrefixOf "eat") $ fmap (x ++) ys
 
 step :: Grid -> Grid
 step = extend checkWord
+
+nextGrid :: Grid
+nextGrid = step startingGrid
+
+nextNextGrid :: Grid
+nextNextGrid = step nextGrid
 
 startingGrid :: Grid
 startingGrid = store lookup (0, 0)
@@ -67,14 +81,15 @@ startingGrid = store lookup (0, 0)
         ]
 
 drawGrid :: Int -> Grid -> String
-drawGrid size g = unlines $ do
-  x <- [0 .. size - 1]
+drawGrid size g = unlines $ reverse $ do
+  y <- [0 .. size - 1]
   return $ do
-    y <- [0 .. size - 1]
+    x <- [0 .. size - 1]
     toChar $ peek (Sum x, Sum y) g
   where
-    toChar [] = "X"
-    toChar xs = concat xs
+    toChar :: [String] -> String
+    toChar [] = "-X-"
+    toChar xs = "-" ++ (concat $ intersperse "|" xs) ++ "-"
 
 printGrid :: Grid -> IO ()
 printGrid = putStrLn . drawGrid 4

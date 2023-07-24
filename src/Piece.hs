@@ -263,7 +263,11 @@ intToList n = map (\c -> read [c]) (show n)
 main :: IO ()
 main = do
   print "lol"
-  WS2.animateGrid WS2.startingGrid
+  WS2.printGrid WS2.startingGrid
+  print "lol"
+  WS2.printGrid WS2.nextGrid
+  print "lol"
+  WS2.printGrid WS2.nextNextGrid
 
 {-
 let path = "UDUDDDDDUD" -- 01010
