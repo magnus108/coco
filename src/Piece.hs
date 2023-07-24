@@ -268,6 +268,11 @@ main = do
   WS2.printGrid WS2.nextGrid
   print "lol"
   WS2.printGrid WS2.nextNextGrid
+  print "lol"
+  WS2.printGrid WS2.nextNextNextGrid
+  print "lol"
+  traceShowM $ WS2.res WS2.startingGrid
+  print "lol"
 
 {-
 let path = "UDUDDDDDUD" -- 01010
