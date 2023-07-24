@@ -60,15 +60,16 @@ sequenceTests = property . lol1 . moves
 -- WordSearch2
 dictOf :: Gen ([(Sum Int, Sum Int)], M.Map WS2.Coord (S.Set String), (Sum Int, Sum Int), Int, Int)
 dictOf = do
-  x <- chooseInt (1, 5)
-  y <- chooseInt (1, 5)
+  x <- chooseInt (1, 10)
+  y <- chooseInt (1, 10)
   m <- fmap M.fromList $ fmap concat $ for [0 .. x - 1] $ \x' -> do
     for [0 .. y - 1] $ \y' -> do
       c <- S.singleton . (: []) <$> elements ['a' .. 'z']
       return $ ((Sum x', Sum y'), c)
   xs <- elements [0 .. (x - 1)]
   ys <- elements [0 .. (y - 1)]
-  moves <- genMoves
+  li <- chooseInt (1, 8)
+  moves <- take li <$> genMoves
   return (moves, m, (Sum xs, Sum ys), x, y)
 
 genMoves :: Gen [(Sum Int, Sum Int)]

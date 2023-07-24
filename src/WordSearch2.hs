@@ -8,6 +8,7 @@ module WordSearch2
     nextGrid,
     nextNextGrid,
     nextNextNextGrid,
+    nextNextNextNextGrid,
     res,
     res2,
     move,
@@ -50,7 +51,7 @@ checkWord grid = S.fromList joint
     joint = do
       x <- S.toList currentCell
       xs <- toList neighbours
-      filter (flip isSubsequenceOf (ask grid)) $ x : fmap (x ++) (S.toList xs)
+      (filter (flip isPrefixOf (ask grid)) $ fmap (\y -> y ++ x) (S.toList xs)) <|> [x] -- (filter (flip isSubsequenceOf (ask grid)) (S.toList xs))
 
 step :: Grid -> Grid
 step = extend checkWord
@@ -64,6 +65,9 @@ nextNextGrid = step nextGrid
 nextNextNextGrid :: Grid
 nextNextNextGrid = step nextNextGrid
 
+nextNextNextNextGrid :: Grid
+nextNextNextNextGrid = step nextNextNextGrid
+
 startingGrid2 :: M.Map Coord (S.Set String) -> Coord -> Store Coord (S.Set String)
 startingGrid2 cells pos = store lookup pos
   where
@@ -71,7 +75,7 @@ startingGrid2 cells pos = store lookup pos
     lookup coord = M.findWithDefault S.empty coord cells
 
 startingGrid :: Grid
-startingGrid = EnvT "e" $ store lookup (0, 0)
+startingGrid = EnvT "eat" $ store lookup (0, 0)
   where
     lookup :: Coord -> S.Set String
     lookup coord = M.findWithDefault S.empty coord cells
@@ -79,7 +83,22 @@ startingGrid = EnvT "e" $ store lookup (0, 0)
     cells :: M.Map Coord (S.Set String)
     cells =
       M.fromList
-        [ ((0, 0), S.singleton "e")
+        [ ((0, 3), S.singleton "o"),
+          ((1, 3), S.singleton "a"),
+          ((2, 3), S.singleton "a"),
+          ((3, 3), S.singleton "n"),
+          ((0, 2), S.singleton "e"),
+          ((1, 2), S.singleton "t"),
+          ((2, 2), S.singleton "a"),
+          ((3, 2), S.singleton "e"),
+          ((0, 1), S.singleton "i"),
+          ((1, 1), S.singleton "h"),
+          ((2, 1), S.singleton "k"),
+          ((3, 1), S.singleton "r"),
+          ((0, 0), S.singleton "i"),
+          ((1, 0), S.singleton "f"),
+          ((2, 0), S.singleton "l"),
+          ((3, 0), S.singleton "v")
         ]
 
 drawGrid :: Int -> Grid -> String
@@ -111,16 +130,10 @@ resGrid :: Int -> Grid -> [String]
 resGrid size g = do
   y <- [0 .. size - 1]
   x <- [0 .. size - 1]
-  traceShowId $ S.toList $ peek (Sum x, Sum y) g
+  S.toList $ peek (Sum x, Sum y) g
 
 res :: Grid -> Bool
-res grid = elem (ask grid) $ foldMap (resGrid 1) ggg
-  where
-    grids = iterate step grid
-    gg = fmap snd $ takeWhile (uncurry (on (/=) (resGrid 1))) $ zip grids (tail grids)
-    ggg = case gg of
-      [] -> [grid]
-      xs -> xs
+res grid = elem (ask grid) $ foldMap (resGrid 4) $ takeWhile2 (on (/=) (resGrid 4)) $ iterate step grid
 
 move :: [(Sum Int, Sum Int)] -> String -> Store Coord (S.Set String) -> String
 move [] s w = (concat $ S.toList $ extract w) ++ s

@@ -271,6 +271,8 @@ main = do
   print "lol"
   WS2.printGrid WS2.nextNextNextGrid
   print "lol"
+  WS2.printGrid WS2.nextNextNextNextGrid
+  print "lol"
   traceShowM $ WS2.res WS2.startingGrid
   print "lol"
 
