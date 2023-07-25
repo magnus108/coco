@@ -267,14 +267,15 @@ intToList n = map (\c -> read [c]) (show n)
 -- position += speed
 -- speed *= 2
 
-start :: T.Traced (Sum Int) (Product Int, Sum Int)
-start = T.traced $ \(Sum x) -> (Product x, Sum x)
+start :: T.Traced (Product Int, Sum Int) (Int, Int)
+start = T.traced $ \(Product x, Sum y) -> (x, y)
 
-forward1 :: T.Traced (Sum Int) (Product Int, Sum Int) -> (Product Int, Sum Int)
-forward1 = T.trace 1
-
-forward :: T.Traced (Sum Int) (Product Int, Sum Int) -> (Product Int, Sum Int)
-forward x = extract $ x
+forward :: T.Traced (Product Int, Sum Int) (Int, Int) -> (Int, Int)
+forward w =
+  let (a, b) = extract w
+      (speed, _) = T.trace (Product 2, Sum 0) w
+      (_, pos) = T.trace (Product 1, Sum a) w
+   in (speed, pos)
 
 main :: IO ()
 main = do
