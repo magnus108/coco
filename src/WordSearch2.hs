@@ -51,7 +51,7 @@ checkWord grid = S.fromList joint
     joint = do
       x <- S.toList currentCell
       xs <- toList neighbours
-      (filter (flip isPrefixOf (ask grid)) $ fmap (\y -> y ++ x) (S.toList xs)) <|> [x] -- (filter (flip isSubsequenceOf (ask grid)) (S.toList xs))
+      x : (filter (flip isPrefixOf (ask grid)) $ fmap (\y -> y ++ x) (S.toList xs))
 
 step :: Grid -> Grid
 step = extend checkWord
@@ -75,7 +75,7 @@ startingGrid2 cells pos = store lookup pos
     lookup coord = M.findWithDefault S.empty coord cells
 
 startingGrid :: Grid
-startingGrid = EnvT "eat" $ store lookup (0, 0)
+startingGrid = EnvT "eateaear" $ store lookup (0, 0)
   where
     lookup :: Coord -> S.Set String
     lookup coord = M.findWithDefault S.empty coord cells

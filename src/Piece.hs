@@ -18,6 +18,7 @@ import Conway
 import Conway (animateGrid)
 import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
+import Data.Monoid (Product)
 import qualified Data.Set as S
 import Eac
 import Fibo
@@ -260,6 +261,21 @@ superdigit2 = extend wfix (go <$> superdigit)
 intToList :: Int -> [Int]
 intToList n = map (\c -> read [c]) (show n)
 
+--- RACECAR
+-- Your car starts at position 0 and speed +1
+-- When you get an instruction 'A', your car does the following:
+-- position += speed
+-- speed *= 2
+
+start :: T.Traced (Sum Int) (Product Int, Sum Int)
+start = T.traced $ \(Sum x) -> (Product x, Sum x)
+
+forward1 :: T.Traced (Sum Int) (Product Int, Sum Int) -> (Product Int, Sum Int)
+forward1 = T.trace 1
+
+forward :: T.Traced (Sum Int) (Product Int, Sum Int) -> (Product Int, Sum Int)
+forward x = extract $ x
+
 main :: IO ()
 main = do
   print "lol"
@@ -275,6 +291,13 @@ main = do
   print "lol"
   traceShowM $ WS2.res WS2.startingGrid
   print "lol"
+  print $ start & extract
+  print $ start =>> forward & extract
+  print $ start =>> forward =>> forward & extract
+  print $ start =>> forward =>> forward =>> forward & extract
+  print $ start =>> forward =>> forward =>> forward =>> forward & extract
+
+-- print $ take 10 $ iterate forward2 (1, 0)
 
 {-
 let path = "UDUDDDDDUD" -- 01010
