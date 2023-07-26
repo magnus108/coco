@@ -24,6 +24,7 @@ import Eac
 import Fibo
 import qualified ListZipper as LZ
 import Relude.Unsafe (read)
+import qualified Snail
 import qualified WordSearch2 as WS2
 
 -- Counting Valleys problem
@@ -271,11 +272,18 @@ start :: T.Traced (Product Int, Sum Int) (Int, Int)
 start = T.traced $ \(Product x, Sum y) -> (x, y)
 
 forward :: T.Traced (Product Int, Sum Int) (Int, Int) -> (Int, Int)
-forward w =
-  let (a, b) = extract w
-      (speed, _) = T.trace (Product 2, Sum 0) w
-      (_, pos) = T.trace (Product 1, Sum a) w
-   in (speed, pos)
+forward = T.trace (Product 2, Sum 0) . Ta.censor (\((Product x), y) -> (Product (x + 1), Sum 0))
+
+--  let (a, b) = extract w
+--     (speed, _) = T.trace (Product 2, Sum 0) w
+--    (_, pos) = T.trace (Product 1, Sum a) w
+-- in (speed, pos)
+
+backward :: T.Traced (Product Int, Sum Int) (Int, Int) -> (Int, Int)
+backward = extract . Ta.censor (\(Product x, Sum y) -> (traceShowId (Product x), Sum y))
+
+-- backward :: T.Traced (Product Int, Sum Int) (Int, Int) -> (Int, Int)
+-- backward w = T.traces (\(x, y) -> (traceShow x $ Product x, Sum y)) w
 
 main :: IO ()
 main = do
@@ -296,7 +304,11 @@ main = do
   print $ start =>> forward & extract
   print $ start =>> forward =>> forward & extract
   print $ start =>> forward =>> forward =>> forward & extract
-  print $ start =>> forward =>> forward =>> forward =>> forward & extract
+  print $ start =>> forward =>> forward =>> forward =>> (\x -> backward x) =>> (\x -> backward x) =>> forward & extract
+  print "SNAIL"
+  Snail.mainer
+
+--  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
 -- print $ take 10 $ iterate forward2 (1, 0)
 

@@ -3,6 +3,8 @@ module ListZipper
     fromList,
     toList,
     backward,
+    toFirst,
+    toLast,
     forward,
     lefts,
     rights,
@@ -51,6 +53,12 @@ backward (ListZipper [] _ _) = Nothing
 forward :: ListZipper a -> Maybe (ListZipper a)
 forward (ListZipper ls a (r : rs)) = Just (listZipper (a : ls) r rs)
 forward (ListZipper _ _ []) = Nothing
+
+toLast :: ListZipper a -> Maybe (ListZipper a)
+toLast = join . viaNonEmpty last . takeWhile isJust . iterate ((=<<) forward) . Just
+
+toFirst :: ListZipper a -> Maybe (ListZipper a)
+toFirst = join . viaNonEmpty last . takeWhile isJust . iterate ((=<<) backward) . Just
 
 lefts :: ListZipper a -> [a]
 lefts (ListZipper ls _ _) = reverse ls

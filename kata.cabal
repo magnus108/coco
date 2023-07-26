@@ -18,6 +18,7 @@ common common-all
         Fibo
         Eac
         WordSearch2
+        Snail
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)
