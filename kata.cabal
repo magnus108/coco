@@ -11,6 +11,7 @@ common common-all
         relude,
         containers,
         adjunctions,
+        monad-loops,
     other-modules:
         Piece
         ListZipper
