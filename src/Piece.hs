@@ -20,6 +20,7 @@ import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
 import Data.Monoid (Product)
 import qualified Data.Set as S
+import qualified DoubleCola
 import Eac
 import Fibo
 import qualified ListZipper as LZ
@@ -306,7 +307,8 @@ main = do
   print $ start =>> forward =>> forward =>> forward & extract
   print $ start =>> forward =>> forward =>> forward =>> (\x -> backward x) =>> (\x -> backward x) =>> forward & extract
   print "SNAIL"
-  Snail.mainer
+  -- Snail.mainer
+  DoubleCola.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 

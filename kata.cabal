@@ -20,6 +20,7 @@ common common-all
         Eac
         WordSearch2
         Snail
+        DoubleCola
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)

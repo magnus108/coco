@@ -103,4 +103,4 @@ mainer = do
 
 --  let y = (repeatBindMaybe (repeatBindMaybe (repeatBindMaybe (repeatBindMaybe input moveRight) moveDown) moveLeft) moveUp)
 
--- popdown moveright
+-- popdow moveright
