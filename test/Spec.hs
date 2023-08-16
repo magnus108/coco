@@ -6,9 +6,11 @@ where
 import Control.Comonad
 import Control.Comonad.Env
 import Control.Comonad.Store
+import Control.Concurrent.Async
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Traversable
+import qualified Dispenser
 import qualified ListZipper as LZ
 import Piece (entersGroundLevel)
 import Piece hiding (main)
@@ -87,9 +89,37 @@ wordTest (moves, m, start, x, y) = property $ WS2.res2 x y $ (EnvT word s)
 -- ,(Sum {getSum = 1},Sum {getSum = 0})
 -- ,2,2)
 
+dispenserTest :: TestTree
+dispenserTest =
+  testGroup
+    "Property Tests Dispenser"
+    [ testProperty "Dispenser" (forAll genProgram propDispenser)
+    ]
+
+genProgram :: Gen [Char]
+genProgram = do
+  listOf (elements ['T', 'R'])
+
+parseProgram :: [Char] -> IO [Int]
+parseProgram xs = do
+  val <- newEmptyMVar
+
+  mapConcurrently
+    ( \x -> case x of
+        'I' -> Dispenser.start val
+        'R' -> Dispenser.reset val
+        'T' -> Dispenser.unsafeTakeTicket val
+    )
+    ('I' : xs)
+
+propDispenser :: [Char] -> Property
+propDispenser xs = ioProperty $ do
+  prog <- parseProgram xs
+  return $ and $ fmap (\xs -> isPrefixOf xs [0 ..]) (transpose (group (sort prog)))
+
 main :: IO ()
 main =
   defaultMain $
     testGroup
       "Tests"
-      [tests]
+      [dispenserTest]

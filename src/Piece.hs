@@ -20,6 +20,7 @@ import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
 import Data.Monoid (Product)
 import qualified Data.Set as S
+import qualified Dispenser
 import qualified DoubleCola
 import Eac
 import Fibo
@@ -308,7 +309,8 @@ main = do
   print $ start =>> forward =>> forward =>> forward =>> (\x -> backward x) =>> (\x -> backward x) =>> forward & extract
   print "SNAIL"
   -- Snail.mainer
-  DoubleCola.mainer
+  --  DoubleCola.mainer
+  Dispenser.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
