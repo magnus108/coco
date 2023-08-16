@@ -46,14 +46,12 @@ start mv = do
 
 safeTakeTicket :: MVar Int -> IO Int
 safeTakeTicket mv = modifyMVar mv $ \currentVal -> do
-  threadDelay 10000
   let newVal = currentVal + 1
   return (newVal, newVal)
 
 unsafeTakeTicket :: MVar Int -> IO Int
 unsafeTakeTicket mv = do
   currentVal <- readMVar mv
-  threadDelay 10000
   let newVal = currentVal + 1
   _ <- takeMVar mv
   putMVar mv newVal

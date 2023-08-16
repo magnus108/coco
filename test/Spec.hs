@@ -108,7 +108,7 @@ parseProgram xs = do
     ( \x -> case x of
         'I' -> Dispenser.start val
         'R' -> Dispenser.reset val
-        'T' -> Dispenser.unsafeTakeTicket val
+        'T' -> Dispenser.safeTakeTicket val
     )
     ('I' : xs)
 
