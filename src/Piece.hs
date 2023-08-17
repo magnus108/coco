@@ -24,6 +24,7 @@ import qualified Dispenser
 import qualified DoubleCola
 import Eac
 import Fibo
+import qualified Linear
 import qualified ListZipper as LZ
 import Relude.Unsafe (read)
 import qualified Snail
@@ -313,6 +314,7 @@ main = do
   --  DoubleCola.mainer
   -- Dispenser.mainer
   Stm.mainer
+  Linear.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 

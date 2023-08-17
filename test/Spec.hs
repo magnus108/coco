@@ -10,12 +10,14 @@ import Control.Concurrent.Async
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Traversable
+import qualified Dejafu
 import qualified Dispenser
 import qualified ListZipper as LZ
 import Piece (entersGroundLevel)
 import Piece hiding (main)
 import Relude.Unsafe ((!!))
 import Test.Tasty
+import qualified Test.Tasty.DejaFu as TestDejafu
 import Test.Tasty.QuickCheck
 import qualified WordSearch2 as WS2
 
@@ -117,9 +119,14 @@ propDispenser xs = ioProperty $ do
   prog <- parseProgram xs
   return $ and $ fmap (\xs -> isPrefixOf xs [0 ..]) (transpose (group (sort prog)))
 
+dejafuTest :: TestTree
+dejafuTest = TestDejafu.testAuto "put twice" Dejafu.myFunction
+
 main :: IO ()
 main =
   defaultMain $
     testGroup
       "Tests"
-      [dispenserTest]
+      [ dispenserTest,
+        dejafuTest
+      ]

@@ -7,6 +7,7 @@ common common-all
     build-depends:
         base >=4.16 && <5,
         comonad,
+        concurrency,
         streams,
         relude,
         containers,
@@ -14,7 +15,11 @@ common common-all
         async,
         monad-loops,
         stm,
+        dejafu,
+        tasty-dejafu
     other-modules:
+        Dejafu
+        Linear
         Piece
         Stm
         ListZipper
