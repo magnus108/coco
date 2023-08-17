@@ -13,8 +13,10 @@ common common-all
         adjunctions,
         async,
         monad-loops,
+        stm,
     other-modules:
         Piece
+        Stm
         ListZipper
         Conway
         Fibo

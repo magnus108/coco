@@ -27,6 +27,7 @@ import Fibo
 import qualified ListZipper as LZ
 import Relude.Unsafe (read)
 import qualified Snail
+import qualified Stm
 import qualified WordSearch2 as WS2
 
 -- Counting Valleys problem
@@ -310,7 +311,8 @@ main = do
   print "SNAIL"
   -- Snail.mainer
   --  DoubleCola.mainer
-  Dispenser.mainer
+  -- Dispenser.mainer
+  Stm.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
