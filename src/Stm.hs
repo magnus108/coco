@@ -40,7 +40,7 @@ mainer = do
 
   result <- atomically $ newTVar (0, 0)
 
-  mapM_ (\x -> forkIO $ atomically $ addToResult result x) [1 .. n]
+  mapConcurrently (\x -> atomically $ addToResult result x) [1 .. n]
 
   sum <- atomically $ waitForCounter result n
 
