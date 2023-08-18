@@ -6,7 +6,9 @@ where
 import Control.Comonad
 import Control.Comonad.Env
 import Control.Comonad.Store
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async
+import qualified Control.Exception as E
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Traversable
@@ -122,11 +124,76 @@ propDispenser xs = ioProperty $ do
 dejafuTest :: TestTree
 dejafuTest = TestDejafu.testAuto "put twice" Dejafu.myFunction
 
+genDeadlockProgram :: Gen [Int]
+genDeadlockProgram = do
+  n <- chooseInt (0, 30)
+  listOf (elements [0 .. n])
+
+parseDeadlockProgram :: [Int] -> IO [()]
+parseDeadlockProgram xs = do
+  let n = 30
+  mvars <- mapM (\x -> newMVar x) [0 .. n]
+  mapConcurrently
+    ( \x -> do
+        let m1 = mvars !! (x `mod` n)
+        let m2 = mvars !! ((x + 1) `mod` n)
+        val1 <- takeMVar m1
+        val2 <- takeMVar m2
+        putMVar m2 (val1)
+        putMVar m1 (val2)
+    )
+    xs
+
+propDeadlock :: Int -> [Int] -> Property
+propDeadlock i xs = ioProperty $ do
+  asyncAction <- async (parseDeadlockProgram xs)
+  result <- E.try (race (wait asyncAction) (threadDelay 6000000)) :: IO (Either SomeException (Either [()] ()))
+  case result of
+    Left e -> do
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      traceShowM e
+      return False -- Completed within timeout
+    Right x -> case x of
+      Left _ -> return True -- Completed within timeout
+      Right x -> do
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        traceShowM "dada"
+        return False -- Blocked (didn't complete within timeout)
+
+deadlockTest :: TestTree
+deadlockTest =
+  testGroup
+    "Property Tests Deadlock"
+    [ testProperty "Deadlock" (forAll genDeadlockProgram (propDeadlock 100000))
+    ]
+
 main :: IO ()
 main =
   defaultMain $
-    testGroup
-      "Tests"
-      [ dispenserTest,
-        dejafuTest
-      ]
+    adjustOption (const $ QuickCheckMaxSize 1000) $
+      adjustOption (const $ QuickCheckVerbose True) $
+        adjustOption (const $ QuickCheckTests 10000) $
+          testGroup
+            "Tests"
+            [ dispenserTest,
+              dejafuTest,
+              deadlockTest
+            ]

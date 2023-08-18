@@ -20,6 +20,7 @@ import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
 import Data.Monoid (Product)
 import qualified Data.Set as S
+import qualified Deadlock
 import qualified Dispenser
 import qualified DoubleCola
 import Eac
@@ -315,6 +316,7 @@ main = do
   -- Dispenser.mainer
   Stm.mainer
   Linear.mainer
+  Deadlock.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 

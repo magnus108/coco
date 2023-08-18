@@ -16,8 +16,9 @@ common common-all
         monad-loops,
         stm,
         dejafu,
-        tasty-dejafu
+        tasty-dejafu,
     other-modules:
+        Deadlock
         Dejafu
         Linear
         Piece
