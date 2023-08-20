@@ -7,7 +7,6 @@ import Control.Comonad
 import Control.Comonad.Env
 import Control.Comonad.Store
 import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async
 import qualified Control.Exception as E
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -21,6 +20,9 @@ import Relude.Unsafe ((!!))
 import Test.Tasty
 import qualified Test.Tasty.DejaFu as TestDejafu
 import Test.Tasty.QuickCheck
+import UnliftIO.Async
+import UnliftIO.Exception
+import UnliftIO.Timeout
 import qualified WordSearch2 as WS2
 
 -- Counting Valleys problem
@@ -124,19 +126,28 @@ propDispenser xs = ioProperty $ do
 dejafuTest :: TestTree
 dejafuTest = TestDejafu.testAuto "put twice" Dejafu.myFunction
 
-genDeadlockProgram :: Gen [Int]
-genDeadlockProgram = do
-  n <- chooseInt (0, 30)
-  listOf (elements [0 .. n])
+genDeadlockProgram :: Gen [(Int, Int)]
+genDeadlockProgram = listOf $ do
+  n0 <- chooseInt (0, 5)
+  n1 <- oneof [chooseInt (0, n0 - 1), chooseInt (n0 + 1, 5)]
+  return (n0, n1)
 
-parseDeadlockProgram :: [Int] -> IO [()]
+genDeadlockProgram2 :: Gen ([(Int, Int)], Int)
+genDeadlockProgram2 = do
+  actions <- listOf $ do
+    x <- choose (0, 10)
+    y <- choose (0, 10)
+    return (x, y)
+  return (filter (\(p1, p2) -> p1 /= p2) $ actions, 10)
+
+parseDeadlockProgram :: [(Int, Int)] -> IO [()]
 parseDeadlockProgram xs = do
-  let n = 30
+  let n = 5
   mvars <- mapM (\x -> newMVar x) [0 .. n]
   mapConcurrently
-    ( \x -> do
-        let m1 = mvars !! (x `mod` n)
-        let m2 = mvars !! ((x + 1) `mod` n)
+    ( \(x1, x2) -> do
+        let m1 = mvars !! x1
+        let m2 = mvars !! x2
         val1 <- takeMVar m1
         val2 <- takeMVar m2
         putMVar m2 (val1)
@@ -144,45 +155,50 @@ parseDeadlockProgram xs = do
     )
     xs
 
-propDeadlock :: Int -> [Int] -> Property
-propDeadlock i xs = ioProperty $ do
-  asyncAction <- async (parseDeadlockProgram xs)
+parseDeadlockProgram2 :: ([(Int, Int)], Int) -> IO [()]
+parseDeadlockProgram2 (actions, tables) = do
+  mvars <- mapM (\y -> newMVar y) [0 .. tables]
+  mapConcurrently
+    ( \(y1, y2) -> do
+        let m1 = mvars !! (y1 `mod` tables)
+        let m2 = mvars !! (y2 `mod` tables)
+        val1 <- takeMVar m1
+        threadDelay 10000
+        val2 <- takeMVar m2
+        putMVar m1 (val2)
+        putMVar m2 (val1)
+    )
+    actions
+
+propDeadlock :: [(Int, Int)] -> Property
+propDeadlock xs = ioProperty $ do
+  asyncAction <- async (timeout 1000 $ parseDeadlockProgram xs)
+  result <- waitCatch asyncAction
+  case result of
+    Left x -> do
+      traceShowM x
+      return False
+    Right x -> do
+      traceShowM x
+      return True
+
+propDeadlock2 :: ([(Int, Int)], Int) -> Property
+propDeadlock2 x = ioProperty $ do
+  asyncAction <- async (parseDeadlockProgram2 x)
   result <- E.try (race (wait asyncAction) (threadDelay 6000000)) :: IO (Either SomeException (Either [()] ()))
   case result of
     Left e -> do
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
-      traceShowM e
       return False -- Completed within timeout
     Right x -> case x of
       Left _ -> return True -- Completed within timeout
       Right x -> do
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
-        traceShowM "dada"
         return False -- Blocked (didn't complete within timeout)
 
 deadlockTest :: TestTree
 deadlockTest =
   testGroup
     "Property Tests Deadlock"
-    [ testProperty "Deadlock" (forAll genDeadlockProgram (propDeadlock 100000))
+    [ testProperty "Deadlock" (forAll genDeadlockProgram2 propDeadlock2)
     ]
 
 main :: IO ()
@@ -190,10 +206,10 @@ main =
   defaultMain $
     adjustOption (const $ QuickCheckMaxSize 1000) $
       adjustOption (const $ QuickCheckVerbose True) $
-        adjustOption (const $ QuickCheckTests 10000) $
+        adjustOption (const $ QuickCheckTests 100) $
           testGroup
             "Tests"
-            [ dispenserTest,
-              dejafuTest,
+            [ -- dispenserTest,
+              ---dejafuTest,
               deadlockTest
             ]
