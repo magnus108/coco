@@ -22,6 +22,7 @@ import Data.Monoid (Product)
 import qualified Data.Set as S
 import qualified Deadlock
 import qualified Dispenser
+import qualified DistributedP
 import qualified DoubleCola
 import Eac
 import Fibo
@@ -317,6 +318,7 @@ main = do
   Stm.mainer
   Linear.mainer
   Deadlock.mainer
+  DistribtuedP.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
