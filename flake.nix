@@ -28,7 +28,7 @@
       in flake // {
         legacyPackages = pkgs;
 
-        packages.default = flake.packages."resume:exe:resume";
+        packages.default = flake.packages."kata:exe:kata";
       });
 
   # --- Flake Local Nix Configuration ----------------------------
