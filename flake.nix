@@ -3,7 +3,11 @@
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
   inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  outputs = { self, nixpkgs, flake-utils, haskellNix }:
+  inputs.distributed-process-src = {
+      flake = true;
+      url = "github:haskell-distributed/distributed-process";
+    };
+  outputs = { self, nixpkgs, flake-utils, haskellNix, distributed-process-src}:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -20,6 +24,7 @@
               final.haskell-nix.hix.project {
                 src = ./.;
                 evalSystem = "x86_64-darwin";
+                buildInputs = [distributed-process-src];
               };
           })
         ];
