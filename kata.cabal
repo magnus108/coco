@@ -6,8 +6,6 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base >=4.16 && <5,
-        distributed-process,
-        network-transport-tcp,
         comonad,
         concurrency,
         streams,
@@ -75,6 +73,9 @@ executable kata
     main-is: Main.hs
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: app, src
+    build-depends:
+ --       distributed-process,
+--        network-transport-tcp
 
 test-suite kata-test
     import: common-all
