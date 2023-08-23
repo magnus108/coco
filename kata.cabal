@@ -5,19 +5,19 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base >=4.16 && <5,
-        comonad,
-        concurrency,
-        streams,
-        relude,
-        containers,
-        adjunctions,
-        async,
-        monad-loops,
-        stm,
-        dejafu,
-        tasty-dejafu,
-        unliftio
+        base >=4.16 && <5
+        --comonad,
+        --concurrency,
+        --streams,
+        --relude,
+        --containers,
+        --adjunctions,
+        --async,
+        --monad-loops,
+--        stm,
+ --       dejafu,
+  --      tasty-dejafu,
+   --     unliftio
     other-modules:
         Deadlock
         DistributedP
@@ -33,10 +33,10 @@ common common-all
         Snail
         Dispenser
         DoubleCola
-    mixins:
-        base hiding (Prelude)
-        , relude (Relude as Prelude)
-        , relude
+--    mixins:
+ --       base hiding (Prelude)
+  --      , relude (Relude as Prelude)
+   --     , relude
     default-language: Haskell2010
     default-extensions:
         ConstraintKinds
@@ -73,7 +73,7 @@ executable kata
     main-is: Main.hs
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: app, src
-    build-depends:
+--    build-depends:
  --       distributed-process,
 --        network-transport-tcp
 
