@@ -7,7 +7,9 @@ import qualified Control.Concurrent.Classy as C
 import qualified Control.Concurrent.Classy.Async as A
 import Control.Concurrent.Classy.MVar as MVar
 import qualified Control.Concurrent.Classy.STM as STM
+import qualified Control.Concurrent.Classy.STM.TVar as TVar
 
+{-
 mainer :: (MonadIO m, C.MonadConc m) => m ()
 mainer = do
   c <- MVar.newMVar []
@@ -24,15 +26,18 @@ mainer = do
 logIt :: C.MonadConc m => MVar.MVar m [String] -> (MVar.MVar m Int, String, MVar.MVar m Int) -> m ()
 logIt varA (var1, x, var2) = do
   _ <- MVar.takeMVar var1
-  MVar.modifyMVar_ varA (\xs -> return $ x : xs)
+  xs <- MVar.takeMVar varA
+  let e = x : xs
+  MVar.putMVar varA e
   MVar.putMVar var2 0
+  seq e (return ())
   return ()
+-}
 
-{-
 mainer :: (MonadIO m, C.MonadConc m) => m ()
 mainer = do
   c <- C.atomically $ TVar.newTVar (0, [])
-  A.mapConcurrently_ (C.atomically . logIt c) [("a", 0), ("b", 1), ("c", 2), ("d", 3), ("e", 4)]
+  A.mapConcurrently_ (C.atomically . logIt c) [("a", 0), ("b", 1), ("c", 2), ("d", 3)]
   xs <- C.atomically $ TVar.readTVar c
   putStrLn (show xs)
 
@@ -40,8 +45,12 @@ logIt :: (C.MonadSTM m) => TVar.TVar m (Int, [String]) -> (String, Int) -> m ()
 logIt c (x, i) = do
   (j, xs) <- TVar.readTVar c
   STM.check (j == i)
-  TVar.writeTVar c (j + 1, x : xs)
--}
+  let a = j + 1
+  let b = x : xs
+  TVar.writeTVar c (a, b)
+  seq a (return ())
+  seq b (return ())
+
 {-
 mainer :: (MonadIO m, MonadFail m, C.MonadConc m) => m ()
 mainer = do
