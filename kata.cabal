@@ -19,6 +19,7 @@ common common-all
         tasty-dejafu,
         unliftio
     other-modules:
+        PrintInOrder
         Deadlock
         DistributedP
         Dejafu

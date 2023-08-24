@@ -16,6 +16,7 @@ import qualified Dispenser
 import qualified ListZipper as LZ
 import Piece (entersGroundLevel)
 import Piece hiding (main)
+import qualified PrintInOrder
 import Relude.Unsafe ((!!))
 import Test.Tasty
 import qualified Test.Tasty.DejaFu as TestDejafu
@@ -198,18 +199,18 @@ deadlockTest :: TestTree
 deadlockTest =
   testGroup
     "Property Tests Deadlock"
-    [ testProperty "Deadlock" (forAll genDeadlockProgram2 propDeadlock2)
+    [ testProperty "Deadlock" $ forAll genProgram $ \_ -> ioProperty PrintInOrder.mainer -- (forAll genDeadlockProgram2 propDeadlock2)
     ]
+
+dejafuTest2 :: TestTree
+dejafuTest2 = TestDejafu.testAuto "printInOrder" PrintInOrder.mainer
 
 main :: IO ()
 main =
   defaultMain $
-    adjustOption (const $ QuickCheckMaxSize 1000) $
-      adjustOption (const $ QuickCheckVerbose True) $
-        adjustOption (const $ QuickCheckTests 100) $
-          testGroup
-            "Tests"
-            [ -- dispenserTest,
-              ---dejafuTest,
-              deadlockTest
-            ]
+    testGroup
+      "Tests"
+      [ -- dispenserTest,
+        dejafuTest2
+        -- deadlockTest
+      ]

@@ -28,6 +28,7 @@ import Eac
 import Fibo
 import qualified Linear
 import qualified ListZipper as LZ
+import qualified PrintInOrder
 import Relude.Unsafe (read)
 import qualified Snail
 import qualified Stm
@@ -293,6 +294,7 @@ backward = extract . Ta.censor (\(Product x, Sum y) -> (traceShowId (Product x),
 
 main :: IO ()
 main = do
+  {-
   print "lol"
   WS2.printGrid WS2.startingGrid
   print "lol"
@@ -312,13 +314,15 @@ main = do
   print $ start =>> forward =>> forward =>> forward & extract
   print $ start =>> forward =>> forward =>> forward =>> (\x -> backward x) =>> (\x -> backward x) =>> forward & extract
   print "SNAIL"
+  -}
   -- Snail.mainer
   --  DoubleCola.mainer
   -- Dispenser.mainer
-  Stm.mainer
-  Linear.mainer
-  Deadlock.mainer
-  DistribtuedP.mainer
+  --  Stm.mainer
+  -- Linear.mainer
+  --  Deadlock.mainer
+  -- DistribtuedP.mainer
+  PrintInOrder.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
