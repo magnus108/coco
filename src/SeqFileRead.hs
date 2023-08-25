@@ -1,15 +1,34 @@
+{-# LANGUAGE BangPatterns #-}
+
 module SeqFileRead
   ( find_,
     find_2,
+    find_3,
+    mainer,
+    mainer2,
   )
 where
 
 import qualified Control.Concurrent.Classy as C
 import qualified Control.Concurrent.Classy.Async as A
+import qualified Control.Concurrent.Classy.IORef as IORef
+import qualified Control.Concurrent.Classy.Lock as L
 import System.FilePath
+import UnliftIO (MonadUnliftIO)
 import UnliftIO.Directory
+import UnliftIO.Exception
 
-find_ :: String -> FilePath -> IO (Maybe FilePath)
+mainer :: (C.MonadConc m, MonadIO m) => m ()
+mainer = do
+  r <- find_ "SeqFileRead.hs" "/Users/magnus/Desktop"
+  print r
+
+mainer2 :: (C.MonadConc m, MonadIO m) => m ()
+mainer2 = do
+  r <- find_2 "SeqFileRead.hs" "/Users/magnus/Desktop"
+  print r
+
+find_ :: (C.MonadConc m, MonadIO m) => String -> FilePath -> m (Maybe FilePath)
 find_ s d = do
   fs <- getDirectoryContents d
   let fs' = sort $ filter (`notElem` [".", ".."]) fs
@@ -59,3 +78,64 @@ subfind s p inner asyncs = do
   if not isdir
     then inner asyncs
     else A.withAsync (find_2 s p) $ \a -> inner (a : asyncs)
+
+find_3 :: (MonadIO m, C.MonadConc m, MonadUnliftIO m) => NBSem m -> String -> FilePath -> m (Maybe FilePath)
+find_3 lock s d = do
+  fs <- getDirectoryContents d
+  let fs' = sort $ filter (`notElem` [".", ".."]) fs
+  if s `elem` fs'
+    then return (Just (d </> s))
+    else do
+      let ps = map (d </>) fs'
+      foldr (subfind2 lock s) dowait ps []
+  where
+    dowait as = loop (reverse as)
+    loop [] = return Nothing
+    loop (a : as) = do
+      r <- A.wait a
+      case r of
+        Nothing -> loop as
+        Just a -> return (Just a)
+
+subfind2 ::
+  (MonadIO m, C.MonadConc m, MonadUnliftIO m) =>
+  NBSem m ->
+  String ->
+  FilePath ->
+  ([A.Async m (Maybe FilePath)] -> m (Maybe FilePath)) ->
+  [A.Async m (Maybe FilePath)] ->
+  m (Maybe FilePath)
+subfind2 lock s p inner asyncs = do
+  isdir <- doesDirectoryExist p
+  if not isdir
+    then inner asyncs
+    else do
+      q <- tryWaitNBSem lock
+      if q
+        then do
+          let dofind = find_3 lock s p `finally` signalNBSem lock
+          A.withAsync dofind $ \a -> inner (a : asyncs)
+        else do
+          r <- find_3 lock s p
+          case r of
+            Nothing -> inner asyncs
+            Just _ -> return r
+
+newtype NBSem m = NBSem (C.IORef m Int)
+
+newNBSem :: C.MonadConc m => Int -> m (NBSem m)
+newNBSem i = do
+  m <- IORef.newIORef i
+  return (NBSem m)
+
+tryWaitNBSem :: C.MonadConc m => NBSem m -> m Bool
+tryWaitNBSem (NBSem m) = do
+  IORef.atomicModifyIORef m $ \i ->
+    if i == 0
+      then (i, False)
+      else let !z = i - 1 in (z, True)
+
+signalNBSem :: C.MonadConc m => NBSem m -> m ()
+signalNBSem (NBSem m) =
+  IORef.atomicModifyIORef m $ \i ->
+    let !z = i + 1 in (z, ())

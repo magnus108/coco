@@ -206,12 +206,16 @@ deadlockTest =
 dejafuTest2 :: TestTree
 dejafuTest2 = TestDejafu.testAuto "printInOrder" PrintInOrder.mainer
 
+dejafuTest3 :: TestTree
+dejafuTest3 = TestDejafu.testAuto "FindFile" SeqFileRead.mainer2
+
 seqFileReadTest :: TestTree
 seqFileReadTest =
   testGroup
     "test seq file read"
-    [ testProperty "find" undefined
-    ]
+    []
+
+-- testProperty "find" undefined
 
 main :: IO ()
 main =
@@ -219,7 +223,7 @@ main =
     testGroup
       "Tests"
       [ -- dispenserTest,
-        -- dejafuTest2
+        dejafuTest3
         -- deadlockTest
-        seqFileReadTest
+        -- seqFileReadTest
       ]
