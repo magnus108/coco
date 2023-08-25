@@ -7,6 +7,7 @@ common common-all
     build-depends:
         base >=4.16 && <5,
         comonad,
+        filepath,
         concurrency,
         streams,
         relude,
@@ -20,6 +21,7 @@ common common-all
         unliftio
     other-modules:
         PrintInOrder
+        SeqFileRead
         Deadlock
         DistributedP
         Dejafu

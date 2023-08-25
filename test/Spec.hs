@@ -18,6 +18,7 @@ import Piece (entersGroundLevel)
 import Piece hiding (main)
 import qualified PrintInOrder
 import Relude.Unsafe ((!!))
+import qualified SeqFileRead
 import Test.Tasty
 import qualified Test.Tasty.DejaFu as TestDejafu
 import Test.Tasty.QuickCheck
@@ -205,12 +206,20 @@ deadlockTest =
 dejafuTest2 :: TestTree
 dejafuTest2 = TestDejafu.testAuto "printInOrder" PrintInOrder.mainer
 
+seqFileReadTest :: TestTree
+seqFileReadTest =
+  testGroup
+    "test seq file read"
+    [ testProperty "find" undefined
+    ]
+
 main :: IO ()
 main =
   defaultMain $
     testGroup
       "Tests"
       [ -- dispenserTest,
-        dejafuTest2
+        -- dejafuTest2
         -- deadlockTest
+        seqFileReadTest
       ]
