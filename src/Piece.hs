@@ -26,6 +26,7 @@ import qualified DistributedP
 import qualified DoubleCola
 import Eac
 import Fibo
+import qualified FileReadEmulate
 import qualified Linear
 import qualified ListZipper as LZ
 import qualified PrintInOrder
@@ -322,7 +323,7 @@ main = do
   -- Linear.mainer
   --  Deadlock.mainer
   -- DistribtuedP.mainer
-  PrintInOrder.mainer
+  FileReadEmulate.mainer
 
 --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 

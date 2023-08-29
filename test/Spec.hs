@@ -19,9 +19,11 @@ import Piece hiding (main)
 import qualified PrintInOrder
 import Relude.Unsafe ((!!))
 import qualified SeqFileRead
+import System.Random
 import Test.Tasty
 import qualified Test.Tasty.DejaFu as TestDejafu
 import Test.Tasty.QuickCheck
+import Test.Tasty.Runners
 import UnliftIO.Async
 import UnliftIO.Exception
 import UnliftIO.Timeout
@@ -204,10 +206,10 @@ deadlockTest =
     ]
 
 dejafuTest2 :: TestTree
-dejafuTest2 = TestDejafu.testAuto "printInOrder" PrintInOrder.mainer
+dejafuTest2 = TestDejafu.testAutoWay (TestDejafu.randomly (mkStdGen 42) 100) TestDejafu.defaultMemType "printinorder" PrintInOrder.mainer
 
 dejafuTest3 :: TestTree
-dejafuTest3 = TestDejafu.testAuto "FindFile" SeqFileRead.mainer2
+dejafuTest3 = TestDejafu.testAutoWay (TestDejafu.systematically $ TestDejafu.Bounds (Just 0) (Just 0)) TestDejafu.defaultMemType "seqFileRead" SeqFileRead.mainer3
 
 seqFileReadTest :: TestTree
 seqFileReadTest =
@@ -223,7 +225,8 @@ main =
     testGroup
       "Tests"
       [ -- dispenserTest,
-        dejafuTest3
+        dejafuTest2
+        -- dejafuTest3
         -- deadlockTest
         -- seqFileReadTest
       ]

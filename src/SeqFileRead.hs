@@ -6,6 +6,7 @@ module SeqFileRead
     find_3,
     mainer,
     mainer2,
+    mainer3,
   )
 where
 
@@ -13,10 +14,9 @@ import qualified Control.Concurrent.Classy as C
 import qualified Control.Concurrent.Classy.Async as A
 import qualified Control.Concurrent.Classy.IORef as IORef
 import qualified Control.Concurrent.Classy.Lock as L
+import Control.Monad.Catch (finally)
 import System.FilePath
-import UnliftIO (MonadUnliftIO)
 import UnliftIO.Directory
-import UnliftIO.Exception
 
 mainer :: (C.MonadConc m, MonadIO m) => m ()
 mainer = do
@@ -25,7 +25,13 @@ mainer = do
 
 mainer2 :: (C.MonadConc m, MonadIO m) => m ()
 mainer2 = do
-  r <- find_2 "SeqFileRead.hs" "/Users/magnus/Desktop"
+  r <- find_2 "SeqFileRead.hs" "/Users/magnus/Desktop/haskell"
+  print r
+
+mainer3 :: (C.MonadConc m, MonadIO m) => m ()
+mainer3 = do
+  sem <- newNBSem 4
+  r <- find_3 sem "SeqFileRead.hs" "/Users/magnus/Desktop/haskell"
   print r
 
 find_ :: (C.MonadConc m, MonadIO m) => String -> FilePath -> m (Maybe FilePath)
@@ -79,7 +85,7 @@ subfind s p inner asyncs = do
     then inner asyncs
     else A.withAsync (find_2 s p) $ \a -> inner (a : asyncs)
 
-find_3 :: (MonadIO m, C.MonadConc m, MonadUnliftIO m) => NBSem m -> String -> FilePath -> m (Maybe FilePath)
+find_3 :: (MonadIO m, C.MonadConc m) => NBSem m -> String -> FilePath -> m (Maybe FilePath)
 find_3 lock s d = do
   fs <- getDirectoryContents d
   let fs' = sort $ filter (`notElem` [".", ".."]) fs
@@ -98,7 +104,7 @@ find_3 lock s d = do
         Just a -> return (Just a)
 
 subfind2 ::
-  (MonadIO m, C.MonadConc m, MonadUnliftIO m) =>
+  (MonadIO m, C.MonadConc m) =>
   NBSem m ->
   String ->
   FilePath ->
