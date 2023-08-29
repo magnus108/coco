@@ -6,6 +6,7 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base >=4.16 && <5,
+        parallel,
         random,
         exceptions,
         comonad,
@@ -22,6 +23,7 @@ common common-all
         tasty-dejafu,
         unliftio
     other-modules:
+        Par
         PrintInOrder
         SeqFileRead
         FileReadEmulate
@@ -77,7 +79,7 @@ library
 executable kata
     import: common-all
     main-is: Main.hs
-    ghc-options: -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -eventlog -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: app, src
 
 test-suite kata-test

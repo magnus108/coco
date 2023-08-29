@@ -8,6 +8,7 @@ module Conway (startingGrid, animateGrid) where
 import Control.Applicative (ZipList (..))
 import Control.Comonad
 import Control.Comonad.Store
+import Control.Parallel.Strategies
 import Data.Foldable (toList)
 import Data.List (intersperse)
 import Data.Monoid (Ap (..), Sum (..))
@@ -83,13 +84,8 @@ startingGrid = store checkAlive (0, 0)
 
 ---- HELPERS
 
--- | Draws a sizeXsize portion of the given grid as a string
 drawGrid :: Int -> Grid -> String
-drawGrid size g = unlines $ do
-  x <- [0 .. size - 1]
-  return $ do
-    y <- [0 .. size - 1]
-    return . toChar $ peek (Sum x, Sum y) g
+drawGrid size g = unlines $ parMap rdeepseq (\x -> fmap (\y -> toChar $ peek (Sum x, Sum y) g) [0 .. size - 1]) [0 .. size - 1]
   where
     toChar True = '#'
     toChar False = '.'
@@ -111,8 +107,8 @@ animateGrid grid =
     . getAp
     . foldMap Ap
     . intersperse (pure "|")
-    . fmap (ZipList . lines . drawGrid 10)
-    . take 4
+    . fmap (ZipList . lines . drawGrid 30)
+    . take 8
     $ iterate step grid
 
 -- | A helper for transposing shapes onto positions in the grid

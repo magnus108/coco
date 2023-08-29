@@ -29,6 +29,7 @@ import Fibo
 import qualified FileReadEmulate
 import qualified Linear
 import qualified ListZipper as LZ
+import qualified Par
 import qualified PrintInOrder
 import Relude.Unsafe (read)
 import qualified Snail
@@ -323,25 +324,25 @@ main = do
   -- Linear.mainer
   --  Deadlock.mainer
   -- DistribtuedP.mainer
-  FileReadEmulate.mainer
+  -- Par.mainer3
 
---  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
+  --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
 
--- print $ take 10 $ iterate forward2 (1, 0)
+  -- print $ take 10 $ iterate forward2 (1, 0)
 
-{-
-let path = "UDUDDDDDUD" -- 01010
-let valleyCount = countValleys path
-let mountainCount = countMountains path
-let pathSequence = "URDL" -- LOOP
-let gg = xxx =>> (\x -> 2 + extract x)
-print "nono"
-print $ extract $ seek (S.fromList [1, 2, 3]) $ extend (\wa -> div (fromMaybe 0 (getSum <$> extract wa)) 2) pairs
-print $ extract $ seek [9, 8, 7, 5] $ superdigit
-print $ extract $ seek [9, 8, 7, 5] $ superdigit2
--}
+  {-
+  let path = "UDUDDDDDUD" -- 01010
+  let valleyCount = countValleys path
+  let mountainCount = countMountains path
+  let pathSequence = "URDL" -- LOOP
+  let gg = xxx =>> (\x -> 2 + extract x)
+  print "nono"
+  print $ extract $ seek (S.fromList [1, 2, 3]) $ extend (\wa -> div (fromMaybe 0 (getSum <$> extract wa)) 2) pairs
+  print $ extract $ seek [9, 8, 7, 5] $ superdigit
+  print $ extract $ seek [9, 8, 7, 5] $ superdigit2
+  -}
 
---  animateGrid startingGrid
+  animateGrid startingGrid
 
 --  print $ extract $ seek [1, 2, 1] $ allPairs
 
