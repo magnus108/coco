@@ -23,6 +23,7 @@ common common-all
         tasty-dejafu,
         unliftio
     other-modules:
+        Yoneda
         Par
         PrintInOrder
         SeqFileRead
