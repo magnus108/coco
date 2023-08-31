@@ -35,6 +35,7 @@ import Relude.Unsafe (read)
 import qualified Snail
 import qualified Stm
 import qualified WordSearch2 as WS2
+import qualified Yoneda
 
 -- Counting Valleys problem
 countValleys :: String -> Int
@@ -342,7 +343,7 @@ main = do
   print $ extract $ seek [9, 8, 7, 5] $ superdigit2
   -}
 
-  animateGrid startingGrid
+  Yoneda.mainer
 
 --  print $ extract $ seek [1, 2, 1] $ allPairs
 

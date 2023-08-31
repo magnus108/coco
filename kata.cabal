@@ -21,7 +21,8 @@ common common-all
         stm,
         dejafu,
         tasty-dejafu,
-        unliftio
+        unliftio,
+        criterion
     other-modules:
         Yoneda
         Par

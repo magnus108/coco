@@ -1,8 +1,12 @@
 {-# LANGUAGE Rank2Types #-}
 
-module Yoneda () where
+module Yoneda
+  ( mainer,
+  )
+where
 
--- fmap :: (a -> b) -> f a -> f b
+import Criterion.Main
+
 newtype Yoneda f a = Yoneda {runYoneda :: forall b. (a -> b) -> f b}
 
 instance Functor (Yoneda f) where
@@ -18,7 +22,16 @@ optimizeFmap f xs = Yoneda (\g -> fmap (g . f) xs)
 myYoneda :: [Int] -> Yoneda [] [Int]
 myYoneda xs = pure xs
 
+-- Your map functions
+naiveMap :: [Int] -> [Int]
+naiveMap xs = map (+ 1) (map (* 2) xs)
+
+yonedaMap :: [Int] -> [Int]
+yonedaMap xs = runYoneda (fmap (+ 1) (optimizeFmap (* 2) xs)) id
+
 mainer :: IO ()
-mainer = do
-  let optimized = optimizeFmap (+ 1) [1, 2, 3]
-  print $ runYoneda (fmap (+ 2) optimized) id
+mainer =
+  defaultMain
+    [ bench "naive map" $ nf naiveMap [1 .. 1000000],
+      bench "yoneda map" $ nf yonedaMap [1 .. 1000000]
+    ]
