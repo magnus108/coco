@@ -30,6 +30,7 @@ import qualified FileReadEmulate
 import qualified Linear
 import qualified ListZipper as LZ
 import qualified Par
+import qualified PingTc
 import qualified PrintInOrder
 import Relude.Unsafe (read)
 import qualified Snail
@@ -324,7 +325,6 @@ main = do
   --  Stm.mainer
   -- Linear.mainer
   --  Deadlock.mainer
-  -- DistribtuedP.mainer
   -- Par.mainer3
 
   --  print $ start =>> forward =>> forward =>> (extract . backward) =>> forward & extract
@@ -343,7 +343,10 @@ main = do
   print $ extract $ seek [9, 8, 7, 5] $ superdigit2
   -}
 
-  Yoneda.mainer
+  -- DistributedP.main
+  PingTc.main
+
+-- Yoneda.mainer
 
 --  print $ extract $ seek [1, 2, 1] $ allPairs
 

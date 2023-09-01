@@ -6,6 +6,10 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base,
+        binary,
+        distributed-process,
+        network-transport,
+        network-transport-tcp,
         parallel,
         random,
         exceptions,
@@ -24,7 +28,9 @@ common common-all
         unliftio,
         criterion
     other-modules:
+        DistribUtils
         Yoneda
+        PingTc
         Par
         PrintInOrder
         SeqFileRead
