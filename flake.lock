@@ -83,6 +83,22 @@
         "type": "github"
       }
     },
+    "distributed-process": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1688775092,
+        "narHash": "sha256-9OxVToBYMWJ8DwyfTqnEG+ujOViJozsdgvcjK0ESn5g=",
+        "owner": "haskell-distributed",
+        "repo": "distributed-process",
+        "rev": "db7a03310e4c26163142662f51d323f8e8d9a51d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "haskell-distributed",
+        "repo": "distributed-process",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -501,6 +517,7 @@
     },
     "root": {
       "inputs": {
+        "distributed-process": "distributed-process",
         "flake-utils": "flake-utils",
         "haskellNix": "haskellNix",
         "nixpkgs": [
