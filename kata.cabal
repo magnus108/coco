@@ -9,11 +9,10 @@ common common-all
         binary,
         distributed-process,
         distributed-static,
-        distributed-simplelocalnet,
+        bytestring,
         network,
         network-transport,
         network-transport-tcp,
-        template-haskell,
         parallel,
         random,
         exceptions,
@@ -32,7 +31,7 @@ common common-all
         unliftio,
         criterion
     other-modules:
-        DistribUtils
+        Pinger
         Yoneda
         PingTc
         Par
