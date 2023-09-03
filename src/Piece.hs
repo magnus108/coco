@@ -344,9 +344,9 @@ main = do
   -}
 
   -- DistributedP.main
-  PingTc.main
+  -- PingTc.main
 
--- Yoneda.mainer
+  Yoneda.mainer
 
 --  print $ extract $ seek [1, 2, 1] $ allPairs
 
