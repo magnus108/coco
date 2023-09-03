@@ -14,15 +14,15 @@ import Control.Comonad
 import Control.Comonad.Store
 import qualified Control.Comonad.Traced as T
 import qualified Control.Comonad.Trans.Traced as Ta
-import Conway
-import Conway (animateGrid)
+import Conwayy
+import Conwayy (animateGrid)
 import Data.Foldable (maximum)
 import qualified Data.Map.Strict as M
 import Data.Monoid (Product)
 import qualified Data.Set as S
 import qualified Deadlock
 import qualified Dispenser
-import qualified DistributedP
+-- import qualified DistributedP
 import qualified DoubleCola
 import Eac
 import Fibo
@@ -30,7 +30,7 @@ import qualified FileReadEmulate
 import qualified Linear
 import qualified ListZipper as LZ
 import qualified Par
-import qualified PingTc
+-- import qualified PingTc
 import qualified PrintInOrder
 import Relude.Unsafe (read)
 import qualified Snail

@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Conway (startingGrid, animateGrid) where
+module Conwayy (startingGrid, animateGrid) where
 
 import Control.Applicative (ZipList (..))
 import Control.Comonad

@@ -5,13 +5,13 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base,
+        base >=4.16 && <5,
         binary,
-        profiteur,
+        ghc-prof,
 --        distributed-process,
  --       distributed-static,
-        bytestring,
-        network,
+       -- bytestring,
+        --network,
   --      network-transport,
    --     network-transport-tcp,
         parallel,
@@ -32,21 +32,21 @@ common common-all
         unliftio,
         criterion
     other-modules:
-        Pinger
         Yoneda
-        PingTc
+        --Pinger
+        --PingTc
         Par
         PrintInOrder
         SeqFileRead
         FileReadEmulate
         Deadlock
-        DistributedP
+        --DistributedP
         Dejafu
         Linear
         Piece
         Stm
         ListZipper
-        Conway
+        Conwayy
         Fibo
         Eac
         WordSearch2
