@@ -9,7 +9,7 @@ common common-all
         binary,
         ghc-prof,
         distributed-process,
- --       distributed-static,
+        distributed-static,
         bytestring,
         network,
         network-transport,
