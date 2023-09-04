@@ -5,9 +5,9 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base,
-        distributed-process,
-        stm >=2.4 && <2.5
+        base >=4.3 && <4.12,
+--        distributed-process,
+        --stm >=2.4 && <2.5
     other-modules:
         Yoneda
         --Pinger
