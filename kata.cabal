@@ -6,31 +6,13 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base >=4.16 && <5,
-        binary,
-        ghc-prof,
---        distributed-process,
- --       distributed-static,
-       -- bytestring,
-        --network,
-  --      network-transport,
-   --     network-transport-tcp,
-        parallel,
-        random,
-        exceptions,
-        comonad,
-        filepath,
-        concurrency,
-        streams,
-        relude,
-        containers,
-        adjunctions,
-        async,
-        monad-loops,
-        stm,
-        dejafu,
-        tasty-dejafu,
-        unliftio,
-        criterion
+        distributed-process >= 0.5 && < 0.8,
+        distributed-process-simplelocalnet ==0.2.*,
+        distributed-static >= 0.2 && < 0.4,
+        bytestring,
+        network,
+        network-transport,
+        network-transport-tcp,
     other-modules:
         Yoneda
         --Pinger
@@ -53,10 +35,6 @@ common common-all
         Snail
         Dispenser
         DoubleCola
-    mixins:
-        base hiding (Prelude)
-        , relude (Relude as Prelude)
-        , relude
     default-language: Haskell2010
     default-extensions:
         ConstraintKinds
@@ -85,7 +63,6 @@ common common-all
 
 library
     import: common-all
-    build-depends:
     hs-source-dirs:   src
 
 executable kata

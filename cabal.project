@@ -2,3 +2,14 @@ packages: .
 profiling: True
 executable-profiling: True
 library-profiling: True
+source-repository-package
+  type: git
+  location: https://github.com/haskell-distributed/distributed-process.git
+  tag: 6ddda4fd72642b8283eb70f7b51b2bb496c5ec27
+  --sha256: 0mi2mab1vi3hpr6zzzdnd0h0q75s4a95mb13iiaznma5dyr0p5az
+
+source-repository-package
+  type: git
+  location: https://github.com/haskell-distributed/distributed-process-simplelocalnet.git
+  tag: 19bf1aa512af7a337e095d3813371158d5677373
+  --sha256: 0xy75s2l5glmn5ba0jy83y3x6c8wqc2a1xknp330yw5x80qi18ln
