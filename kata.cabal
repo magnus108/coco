@@ -5,9 +5,32 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base >=4.3 && <4.12,
---        distributed-process,
-        --stm >=2.4 && <2.5
+        base >=4.16 && <5,
+        binary,
+        ghc-prof,
+        distributed-process,
+ --       distributed-static,
+        bytestring,
+        network,
+        network-transport,
+        network-transport-tcp,
+        parallel,
+        random,
+        exceptions,
+        comonad,
+        filepath,
+        concurrency,
+        streams,
+        relude,
+        containers,
+        adjunctions,
+        async,
+        monad-loops,
+        stm,
+        dejafu,
+        tasty-dejafu,
+        unliftio,
+        criterion
     other-modules:
         Yoneda
         --Pinger
@@ -30,6 +53,10 @@ common common-all
         Snail
         Dispenser
         DoubleCola
+    mixins:
+        base hiding (Prelude)
+        , relude (Relude as Prelude)
+        , relude
     default-language: Haskell2010
     default-extensions:
         ConstraintKinds
@@ -74,3 +101,7 @@ test-suite kata-test
     other-modules:
     hs-source-dirs:
         src, test
+    build-depends:
+        , tasty
+        , tasty-hunit
+        , tasty-quickcheck
