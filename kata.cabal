@@ -5,48 +5,49 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base,
-        speculate,
-        quickspec,
-        binary,
-        ghc-prof,
-        bytestring,
-        parallel,
-        random,
-        exceptions,
-        comonad,
-        filepath,
-        concurrency,
-        streams,
+        base >=4.7 && <5,
+        --speculate,
+        quickspec >= 2.1.5,
+        --binary,
+        --ghc-prof,
+        --bytestring,
+        --parallel,
+        --random,
+        --exceptions,
+        --comonad,
+        --filepath,
+        --concurrency,
+        --streams,
         relude,
-        containers,
-        adjunctions,
-        async,
-        monad-loops,
-        stm,
-        dejafu,
-        tasty-dejafu,
-        unliftio,
-        criterion
+        --containers,
+        --adjunctions,
+        --async,
+        --monad-loops,
+        --stm,
+        --dejafu,
+        --tasty-dejafu,
+        --unliftio,
+        --criterion
     other-modules:
-        Yoneda
-        Par
-        PrintInOrder
-        SeqFileRead
-        FileReadEmulate
-        Deadlock
-        Dejafu
-        Linear
+        --Yoneda
+        --Par
+        --PrintInOrder
+        --SeqFileRead
+        --FileReadEmulate
+        --Deadlock
+        --Dejafu
+        --Linear
         Piece
-        Stm
-        ListZipper
-        Conwayy
-        Fibo
-        Eac
-        WordSearch2
-        Snail
-        Dispenser
-        DoubleCola
+        SpecIt
+        --Stm
+        --ListZipper
+        --Conwayy
+        --Fibo
+        --Eac
+        --WordSearch2
+        --Snail
+        --Dispenser
+        --DoubleCola
     mixins:
         base hiding (Prelude)
         , relude (Relude as Prelude)
