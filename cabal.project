@@ -2,8 +2,3 @@ packages: .
 profiling: True
 executable-profiling: True
 library-profiling: True
-source-repository-package
-  type: git
-  location: https://github.com/haskell-distributed/distributed-process.git
-  tag: db7a03310e4c26163142662f51d323f8e8d9a51d
-  --sha256: 164z290jn8zph8fkp8w9b0ws7sqvqjllx7qc1xy64caqh175bv7l

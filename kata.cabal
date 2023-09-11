@@ -5,15 +5,10 @@ version: 1.0.0.0
 
 common common-all
     build-depends:
-        base >=4.16 && <5,
+        base,
         binary,
         ghc-prof,
-        distributed-process,
-        distributed-static,
         bytestring,
-        network,
-        network-transport,
-        network-transport-tcp,
         parallel,
         random,
         exceptions,
@@ -33,14 +28,11 @@ common common-all
         criterion
     other-modules:
         Yoneda
-        --Pinger
-        --PingTc
         Par
         PrintInOrder
         SeqFileRead
         FileReadEmulate
         Deadlock
-        --DistributedP
         Dejafu
         Linear
         Piece
