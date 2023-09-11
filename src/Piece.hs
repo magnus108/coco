@@ -34,6 +34,7 @@ import qualified Par
 import qualified PrintInOrder
 import Relude.Unsafe (read)
 import qualified Snail
+import qualified SpecIt
 import qualified Stm
 import qualified WordSearch2 as WS2
 import qualified Yoneda
@@ -346,7 +347,7 @@ main = do
   -- DistributedP.main
   -- PingTc.main
 
-  Yoneda.mainer
+  SpecIt.main
 
 --  print $ extract $ seek [1, 2, 1] $ allPairs
 

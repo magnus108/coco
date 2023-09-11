@@ -1,0 +1,18 @@
+module SpecIt
+  ( main,
+  )
+where
+
+import Test.Speculate
+
+main :: IO ()
+main =
+  speculate
+    args
+      { constants =
+          [ showConstant (0 :: Int),
+            showConstant (1 :: Int),
+            constant "+" ((+) :: Int -> Int -> Int),
+            constant "abs" (abs :: Int -> Int)
+          ]
+      }

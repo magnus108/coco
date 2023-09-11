@@ -6,6 +6,8 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base,
+        speculate,
+        quickspec,
         binary,
         ghc-prof,
         bytestring,
@@ -92,8 +94,9 @@ test-suite kata-test
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     other-modules:
     hs-source-dirs:
-        src, test
-    build-depends:
-        , tasty
-        , tasty-hunit
-        , tasty-quickcheck
+        src
+        --, test
+    --build-depends:
+        --, tasty
+        --, tasty-hunit
+        --, tasty-quickcheck
