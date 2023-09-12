@@ -2,3 +2,8 @@ packages: .
 profiling: True
 executable-profiling: True
 library-profiling: True
+source-repository-package
+  type: git
+  location: https://github.com/nick8325/quickspec.git
+  tag: 7fa1f8adde990de033c26c0c0c169bee4b7c460a
+  --sha256: 11inwf7fxip3902vxd1rw963qaxs7w0qv8xwg27dg21r34yk9vm4
