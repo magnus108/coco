@@ -16,9 +16,7 @@ data PrepaymentState
   deriving stock (Show, Eq, Ord)
 
 instance Arbitrary PrepaymentState where
-  arbitrary = do
-    n <- arbitrary
-    oneof [return $ PrepaymentState n, return $ CloneState n (n + 1)]
+  arbitrary = oneof [return $ PrepaymentState 0, return $ CloneState 0 (0 + 1)]
 
 empty' :: PrepaymentState
 empty' = PrepaymentState 0
@@ -169,6 +167,9 @@ confirmTwo (TwoOneSelected x1 x2) = (\x2' -> TwoOneSelected x1 x2') <$> confirm'
 confirmTwo (TwoTwoSelected x1 x2) = (\x2' -> TwoTwoSelected x1 x2') <$> confirm' x2
 confirmTwo _ = Nothing
 
+-- instance Observe TkState (Maybe TkState) (Maybe TkState) where
+--  observe x y = if (canAddOne x && canAddOne y) then y else Nothing
+
 main :: IO ()
 main =
   quickSpec
@@ -193,9 +194,12 @@ main =
           predicate "canSelectOne" (canSelectOne :: TkState -> Bool),
           predicate "canSelectTwo" (canSelectTwo :: TkState -> Bool),
           predicate "canDeselectOne" (canDeselectOne :: TkState -> Bool),
-          predicate "canDeselectTwo" (canDeselectTwo :: TkState -> Bool)
+          predicate "canDeselectTwo" (canDeselectTwo :: TkState -> Bool),
+          predicate "isJust" (isJust :: Maybe TkState -> Bool),
+          predicate "==" ((==) :: TkState -> TkState -> Bool),
+          predicate "/=" ((/=) :: TkState -> TkState -> Bool)
         ],
+      -- monoObserve @TkState,
       mono @TkState,
-      mono @PrepaymentState,
       withMaxTests 1000
     ]
