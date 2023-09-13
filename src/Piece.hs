@@ -4,7 +4,8 @@ module Piece
 where
 
 import qualified SpecIt
+import qualified SpecIt2
 
 main :: IO ()
 main = do
-  SpecIt.main
+  SpecIt2.main

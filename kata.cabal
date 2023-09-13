@@ -41,6 +41,7 @@ common common-all
         --Linear
         Piece
         SpecIt
+        SpecIt2
         --Stm
         --ListZipper
         --Conwayy
