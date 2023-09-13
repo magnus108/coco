@@ -37,67 +37,96 @@ data Empty = Empty
   deriving stock (Show, Eq, Ord)
 
 instance Arbitrary Empty where
-  arbitrary =
-    oneof
-      [ return Empty
-      ]
-
-data TkStateOne
-  = One PrepaymentState
-  | OneSelected PrepaymentState
-  deriving stock (Show, Eq, Ord)
-
-instance Arbitrary TkStateOne where
-  arbitrary =
-    oneof
-      [ One <$> arbitrary,
-        OneSelected <$> arbitrary
-      ]
-
-data TkStateTwo
-  = Two PrepaymentState PrepaymentState
-  | TwoOneSelected PrepaymentState PrepaymentState
-  | TwoTwoSelected PrepaymentState PrepaymentState
-  deriving stock (Show, Eq, Ord)
-
-instance Arbitrary TkStateTwo where
-  arbitrary =
-    oneof
-      [ Two <$> arbitrary <*> arbitrary,
-        TwoOneSelected <$> arbitrary <*> arbitrary,
-        TwoTwoSelected <$> arbitrary <*> arbitrary
-      ]
-
-clearOne :: TkStateOne -> Empty
-clearOne ts = Empty
-
-clearTwo :: TkStateTwo -> Empty
-clearTwo ts = Empty
+  arbitrary = return Empty
 
 addOne :: Empty -> TkStateOne
 addOne xs = One empty'
 
+newtype TkStateOne = One PrepaymentState
+  deriving stock (Show, Eq, Ord)
+  deriving newtype (Arbitrary)
+
+clearOne :: TkStateOne -> Empty
+clearOne ts = Empty
+
 addTwo :: TkStateOne -> TkStateTwo
 addTwo (One x) = Two x empty'
-addTwo (OneSelected x) = TwoOneSelected x empty'
+
+selectOne :: TkStateOne -> TkStateOneSelected
+selectOne (One x1) = OneSelected x1
+
+newtype TkStateOneSelected = OneSelected PrepaymentState
+  deriving stock (Show, Eq, Ord)
+  deriving newtype (Arbitrary)
+
+clearOneSelected :: TkStateOneSelected -> Empty
+clearOneSelected ts = Empty
+
+addTwoSelected :: TkStateOneSelected -> TkStateTwoOneSelected
+addTwoSelected (OneSelected x) = TwoOneSelected x empty'
+
+deselectOne :: TkStateOneSelected -> TkStateOne
+deselectOne (OneSelected x) = One x
+
+data TkStateTwo = Two PrepaymentState PrepaymentState
+  deriving stock (Show, Eq, Ord)
+
+instance Arbitrary TkStateTwo where
+  arbitrary = Two <$> arbitrary <*> arbitrary
+
+clearTwo :: TkStateTwo -> Empty
+clearTwo ts = Empty
 
 deleteTwo :: TkStateTwo -> TkStateOne
 deleteTwo (Two x1 x2) = One x1
-deleteTwo (TwoOneSelected x1 x2) = OneSelected x1
 
-flipOne :: TkStateOne -> TkStateOne
-flipOne (One x1) = OneSelected x1
-flipOne (OneSelected x1) = One x1
-
-selectTwoOne :: TkStateTwo -> TkStateTwo
+selectTwoOne :: TkStateTwo -> TkStateTwoOneSelected
 selectTwoOne (Two x1 x2) = TwoOneSelected x1 x2
-selectTwoOne (TwoOneSelected x1 x2) = Two x1 x2
-selectTwoOne (TwoTwoSelected x1 x2) = TwoOneSelected x1 x2
 
-selectTwoTwo :: TkStateTwo -> TkStateTwo
+selectTwoTwo :: TkStateTwo -> TkStateTwoTwoSelected
 selectTwoTwo (Two x1 x2) = TwoTwoSelected x1 x2
-selectTwoTwo (TwoOneSelected x1 x2) = TwoTwoSelected x1 x2
-selectTwoTwo (TwoTwoSelected x1 x2) = Two x1 x2
+
+data TkStateTwoOneSelected = TwoOneSelected PrepaymentState PrepaymentState
+  deriving stock (Show, Eq, Ord)
+
+instance Arbitrary TkStateTwoOneSelected where
+  arbitrary = TwoOneSelected <$> arbitrary <*> arbitrary
+
+clearTwoOneSelected :: TkStateTwoOneSelected -> Empty
+clearTwoOneSelected ts = Empty
+
+deselectTwoOne :: TkStateTwoOneSelected -> TkStateTwo
+deselectTwoOne (TwoOneSelected x1 x2) = Two x1 x2
+
+selectTwoTwoFromOne :: TkStateTwoOneSelected -> TkStateTwoTwoSelected
+selectTwoTwoFromOne (TwoOneSelected x1 x2) = TwoTwoSelected x1 x2
+
+deleteTwoOne :: TkStateTwoOneSelected -> TkStateOneSelected
+deleteTwoOne (TwoOneSelected x1 x2) = OneSelected x1
+
+deleteTwoOneSelected :: TkStateTwoOneSelected -> TkStateOne
+deleteTwoOneSelected (TwoOneSelected x1 x2) = One x2
+
+data TkStateTwoTwoSelected = TwoTwoSelected PrepaymentState PrepaymentState
+  deriving stock (Show, Eq, Ord)
+
+instance Arbitrary TkStateTwoTwoSelected where
+  arbitrary = TwoTwoSelected <$> arbitrary <*> arbitrary
+
+clearTwoTwoSelected :: TkStateTwoTwoSelected -> Empty
+clearTwoTwoSelected ts = Empty
+
+deselectTwoTwo :: TkStateTwoTwoSelected -> TkStateTwo
+deselectTwoTwo (TwoTwoSelected x1 x2) = Two x1 x2
+
+selectTwoOneFromTwo :: TkStateTwoTwoSelected -> TkStateTwoOneSelected
+selectTwoOneFromTwo (TwoTwoSelected x1 x2) = TwoOneSelected x1 x2
+
+deleteTwoTwo :: TkStateTwoTwoSelected -> TkStateOneSelected
+deleteTwoTwo (TwoTwoSelected x1 x2) = OneSelected x2
+
+deleteTwoTwoSelected :: TkStateTwoTwoSelected -> TkStateOne
+deleteTwoTwoSelected (TwoTwoSelected x1 x2) = One x1
 
 --- Edit prepayment
 {-
@@ -143,38 +172,32 @@ confirmTwo _ = Nothing
 main :: IO ()
 main =
   quickSpec
-    [ "clearOne" `con` (clearOne :: TkStateOne -> Empty),
-      "clearTwo" `con` (clearTwo :: TkStateTwo -> Empty),
-      "addOne" `con` (addOne :: Empty -> TkStateOne),
+    [ "addOne" `con` (addOne :: Empty -> TkStateOne),
+      "clearOne" `con` (clearOne :: TkStateOne -> Empty),
       "addTwo" `con` (addTwo :: TkStateOne -> TkStateTwo),
+      "selectOne" `con` (selectOne :: TkStateOne -> TkStateOneSelected),
+      "clearOneSelected" `con` (clearOneSelected :: TkStateOneSelected -> Empty),
+      "addTwoSelected" `con` (addTwoSelected :: TkStateOneSelected -> TkStateTwoOneSelected),
+      "deselectOne" `con` (deselectOne :: TkStateOneSelected -> TkStateOne),
+      "clearTwo" `con` (clearTwo :: TkStateTwo -> Empty),
       "deleteTwo" `con` (deleteTwo :: TkStateTwo -> TkStateOne),
-      "flipOne" `con` (flipOne :: TkStateOne -> TkStateOne),
-      "selectTwoOne" `con` (selectTwoOne :: TkStateTwo -> TkStateTwo),
-      "selectTwoTwo" `con` (selectTwoTwo :: TkStateTwo -> TkStateTwo),
-      {-
-      "editOne" `con` (editOne :: TkState -> Maybe TkState),
-      "editTwo" `con` (editTwo :: TkState -> Maybe TkState),
-      "cancelOne" `con` (cancelOne :: TkState -> Maybe TkState),
-      "cancelTwo" `con` (cancelTwo :: TkState -> Maybe TkState),
-      "confirmOne" `con` (confirmOne :: TkState -> Maybe TkState),
-      "confirmTwo" `con` (confirmTwo :: TkState -> Maybe TkState),
-      -}
-      {-background
-      [ predicate "canAddOne" (canAddOne :: TkState -> Bool),
-        predicate "canAddTwo" (canAddTwo :: TkState -> Bool),
-        predicate "deletable" (deletable :: TkState -> Bool),
-        predicate "canSelectOne" (canSelectOne :: TkState -> Bool),
-        predicate "canSelectTwo" (canSelectTwo :: TkState -> Bool),
-        predicate "canDeselectOne" (canDeselectOne :: TkState -> Bool),
-        predicate "canDeselectTwo" (canDeselectTwo :: TkState -> Bool),
-        predicate "isJust" (isJust :: Maybe TkState -> Bool),
-        predicate "==" ((==) :: TkState -> TkState -> Bool),
-        predicate "/=" ((/=) :: TkState -> TkState -> Bool)
-      ],
-      -}
-      -- monoObserve @TkState,
+      "selectTwoOne" `con` (selectTwoOne :: TkStateTwo -> TkStateTwoOneSelected),
+      "selectTwoTwo" `con` (selectTwoTwo :: TkStateTwo -> TkStateTwoTwoSelected),
+      "clearTwoOneSelected" `con` (clearTwoOneSelected :: TkStateTwoOneSelected -> Empty),
+      "deselectTwoOne" `con` (deselectTwoOne :: TkStateTwoOneSelected -> TkStateTwo),
+      "selectTwoTwoFromOne" `con` (selectTwoTwoFromOne :: TkStateTwoOneSelected -> TkStateTwoTwoSelected),
+      "deleteTwoOne" `con` (deleteTwoOne :: TkStateTwoOneSelected -> TkStateOneSelected),
+      "deleteTwoOneSelected" `con` (deleteTwoOneSelected :: TkStateTwoOneSelected -> TkStateOne),
+      "clearTwoTwoSelected" `con` (clearTwoTwoSelected :: TkStateTwoTwoSelected -> Empty),
+      "deselectTwoTwo" `con` (deselectTwoTwo :: TkStateTwoTwoSelected -> TkStateTwo),
+      "selectTwoOneFromTwo" `con` (selectTwoOneFromTwo :: TkStateTwoTwoSelected -> TkStateTwoOneSelected),
+      "deleteTwoTwo" `con` (deleteTwoTwo :: TkStateTwoTwoSelected -> TkStateOneSelected),
+      "deleteTwoTwoSelected" `con` (deleteTwoTwoSelected :: TkStateTwoTwoSelected -> TkStateOne),
       mono @Empty,
       mono @TkStateOne,
+      mono @TkStateOneSelected,
       mono @TkStateTwo,
+      mono @TkStateTwoTwoSelected,
+      mono @TkStateTwoOneSelected,
       withMaxTests 1000
     ]
