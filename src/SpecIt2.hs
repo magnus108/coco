@@ -56,13 +56,44 @@ data State = Zero | One | Two
 instance Arbitrary State where
   arbitrary = elements [Zero, One, Two]
 
-data Transition :: State -> State -> * where
+data Transition a b where
   AddOne :: Transition Zero One
   AddTwo :: Transition One Two
   RemoveTwo :: Transition Two One
   RemoveOne :: Transition One Zero
 
-data StateMachine :: State -> * where
+instance Eq (Transition a b) where
+  AddOne == AddOne = True
+  AddTwo == AddTwo = True
+  RemoveTwo == RemoveTwo = True
+  RemoveOne == RemoveOne = True
+  _ == _ = False
+
+instance Ord (Transition a b) where
+  compare AddOne AddOne = EQ
+  compare AddOne _ = LT
+  compare _ AddOne = GT
+  compare AddTwo AddTwo = EQ
+  compare AddTwo _ = LT
+  compare _ AddTwo = GT
+  compare RemoveTwo RemoveTwo = EQ
+  compare RemoveTwo _ = LT
+  compare _ RemoveTwo = GT
+  compare RemoveOne RemoveOne = EQ
+
+instance Arbitrary (Transition Zero One) where
+  arbitrary = return AddOne
+
+instance Arbitrary (Transition One Two) where
+  arbitrary = return AddTwo
+
+instance Arbitrary (Transition Two One) where
+  arbitrary = return RemoveTwo
+
+instance Arbitrary (Transition One Zero) where
+  arbitrary = return RemoveOne
+
+data StateMachine a where
   Start :: StateMachine Zero
   Start1 :: StateMachine One
   Start2 :: StateMachine Two
@@ -71,18 +102,19 @@ data StateMachine :: State -> * where
 zero :: StateMachine Zero
 zero = Start
 
-addOne :: StateMachine Zero -> StateMachine One
-addOne sm = Step sm AddOne
+addOne :: Transition Zero One -> StateMachine Zero -> StateMachine One
+addOne f sm = Step sm f
 
-removeOne :: StateMachine One -> StateMachine Zero
-removeOne sm = Step sm RemoveOne
+removeOne :: Transition One Zero -> StateMachine One -> StateMachine Zero
+removeOne f sm = Step sm f
 
-addTwo :: StateMachine One -> StateMachine Two
-addTwo sm = Step sm AddTwo
+addTwo :: Transition One Two -> StateMachine One -> StateMachine Two
+addTwo f sm = Step sm f
 
-removeTwo :: StateMachine Two -> StateMachine One
-removeTwo sm = Step sm RemoveTwo
+removeTwo :: Transition Two One -> StateMachine Two -> StateMachine One
+removeTwo f sm = Step sm f
 
+-------------------------------------------------------------------------------
 instance Arbitrary (StateMachine Zero) where
   arbitrary = return zero
 
@@ -103,6 +135,8 @@ instance Observe State Bool (StateMachine Two) where
 
 runStateMachine :: StateMachine s -> [State]
 runStateMachine Start = [Zero]
+runStateMachine Start1 = [One]
+runStateMachine Start2 = [Two]
 runStateMachine (Step sm AddOne) = runStateMachine sm ++ [One]
 runStateMachine (Step sm AddTwo) = [Two] ++ runStateMachine sm ++ [Two]
 runStateMachine (Step sm RemoveOne) = [Zero] ++ runStateMachine sm ++ [Zero]
@@ -110,21 +144,25 @@ runStateMachine (Step sm RemoveTwo) = [One] ++ runStateMachine sm ++ [One]
 
 main :: IO ()
 main = do
-  let gg = runStateMachine $ addOne $ zero
-  let gg2 = runStateMachine $ removeTwo $ addTwo $ addOne $ zero
+  let gg = runStateMachine $ addOne AddOne $ zero
+  let gg2 = runStateMachine $ removeTwo RemoveTwo $ addTwo AddTwo $ addOne AddOne $ zero
   let gg3 = (last gg) == (last gg2)
   putStrLn $ show $ last gg
   putStrLn $ show $ last gg2
   putStrLn $ show $ gg3
   quickSpec
     [ "zero" `con` (zero :: StateMachine Zero),
-      "one" `con` (Start1 :: StateMachine One),
-      "Two" `con` (Start2 :: StateMachine Two),
-      "addOne" `con` (addOne :: StateMachine Zero -> StateMachine One),
-      "removeOne" `con` (removeOne :: StateMachine One -> StateMachine Zero),
-      "addTwo" `con` (addTwo :: StateMachine One -> StateMachine Two),
-      "removeTwo" `con` (removeTwo :: StateMachine Two -> StateMachine One),
+      "start1" `con` (Start1 :: StateMachine One),
+      "start2" `con` (Start2 :: StateMachine Two),
+      "addOne" `con` (addOne :: Transition Zero One -> StateMachine Zero -> StateMachine One),
+      "removeOne" `con` (removeOne :: Transition One Zero -> StateMachine One -> StateMachine Zero),
+      "addTwo" `con` (addTwo :: Transition One Two -> StateMachine One -> StateMachine Two),
+      "removeTwo" `con` (removeTwo :: Transition Two One -> StateMachine Two -> StateMachine One),
       mono @(State),
+      mono @(Transition Zero One),
+      mono @(Transition One Two),
+      mono @(Transition Two One),
+      mono @(Transition One Zero),
       monoObserve @(StateMachine Zero) @State @Bool,
       monoObserve @(StateMachine One) @State @Bool,
       monoObserve @(StateMachine Two) @State @Bool
@@ -133,7 +171,7 @@ main = do
 
 ------------------------------------
 -- data Selector a b
---  = Left' a b
+--  = Left' a Step
 --  | Right' a b
 --  | None' a b
 
