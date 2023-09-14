@@ -56,13 +56,13 @@ data State = Zero | One | Two
 instance Arbitrary State where
   arbitrary = elements [Zero, One, Two]
 
-data Transition :: State -> State -> * where
+data Transition :: State -> State -> Type where
   AddOne :: Transition Zero One
   AddTwo :: Transition One Two
   RemoveTwo :: Transition Two One
   RemoveOne :: Transition One Zero
 
-data StateMachine :: State -> * where
+data StateMachine :: State -> Type where
   Start :: StateMachine Zero
   Start1 :: StateMachine One
   Start2 :: StateMachine Two
@@ -92,29 +92,31 @@ instance Arbitrary (StateMachine One) where
 instance Arbitrary (StateMachine Two) where
   arbitrary = return Start2
 
-instance Observe State Bool (StateMachine Zero) where
-  observe test machine = test == (last $ runStateMachine machine)
+-- instance Observe State Bool (StateMachine Zero) where
+-- observe test machine = traceShowId test == (traceShowId (last $ runStateMachine machine))
 
-instance Observe State Bool (StateMachine One) where
-  observe test machine = test == (last $ runStateMachine machine)
+-- instance Observe State Bool (StateMachine One) where
+-- observe test machine = test == (last $ runStateMachine machine)
 
-instance Observe State Bool (StateMachine Two) where
-  observe test machine = test == (last $ runStateMachine machine)
+-- instance Observe State Bool (StateMachine Two) where
+-- observe test machine = test == (last $ runStateMachine machine)
 
 runStateMachine :: StateMachine s -> [State]
 runStateMachine Start = [Zero]
+runStateMachine Start1 = [One]
+runStateMachine Start2 = [Two]
 runStateMachine (Step sm AddOne) = runStateMachine sm ++ [One]
-runStateMachine (Step sm AddTwo) = [Two] ++ runStateMachine sm ++ [Two]
-runStateMachine (Step sm RemoveOne) = [Zero] ++ runStateMachine sm ++ [Zero]
-runStateMachine (Step sm RemoveTwo) = [One] ++ runStateMachine sm ++ [One]
+runStateMachine (Step sm AddTwo) = runStateMachine sm ++ [Two]
+runStateMachine (Step sm RemoveOne) = runStateMachine sm ++ [Zero]
+runStateMachine (Step sm RemoveTwo) = runStateMachine sm ++ [One]
 
 main :: IO ()
 main = do
   let gg = runStateMachine $ addOne $ zero
   let gg2 = runStateMachine $ removeTwo $ addTwo $ addOne $ zero
   let gg3 = (last gg) == (last gg2)
-  putStrLn $ show $ last gg
-  putStrLn $ show $ last gg2
+  putStrLn $ show $ gg
+  putStrLn $ show $ gg2
   putStrLn $ show $ gg3
   quickSpec
     [ "zero" `con` (zero :: StateMachine Zero),
@@ -124,10 +126,13 @@ main = do
       "removeOne" `con` (removeOne :: StateMachine One -> StateMachine Zero),
       "addTwo" `con` (addTwo :: StateMachine One -> StateMachine Two),
       "removeTwo" `con` (removeTwo :: StateMachine Two -> StateMachine One),
-      mono @(State),
-      monoObserve @(StateMachine Zero) @State @Bool,
-      monoObserve @(StateMachine One) @State @Bool,
-      monoObserve @(StateMachine Two) @State @Bool
+      "runStateMachine" `con` (last . runStateMachine :: StateMachine Zero -> State),
+      "runStateMachine" `con` (last . runStateMachine :: StateMachine One -> State),
+      "runStateMachine" `con` (last . runStateMachine :: StateMachine Two -> State),
+      mono @(State)
+      -- ,  monoObserve @(StateMachine Zero) @State @Bool,
+      --   monoObserve @(StateMachine One) @State @Bool,
+      --    monoObserve @(StateMachine Two) @State @Bool
       --      ,background [prelude]
     ]
 
