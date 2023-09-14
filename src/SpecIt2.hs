@@ -1,5 +1,8 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -9,9 +12,12 @@ module SpecIt2
 where
 
 import QuickSpec
+import Relude.Unsafe (last)
 import Test.QuickCheck
+import Prelude hiding (Off, On, One, State, last)
 
 data Prepayment a where
+  Emptyy :: Prepayment ()
   Normal :: Int -> Prepayment Int
   Copy :: Int -> Int -> Prepayment (Int, Int)
 
@@ -19,23 +25,20 @@ deriving instance Eq a => Eq (Prepayment a)
 
 deriving instance Ord a => Ord (Prepayment a)
 
+instance Arbitrary (Prepayment ()) where
+  arbitrary = return $ Emptyy
+
 instance Arbitrary (Prepayment Int) where
   arbitrary = Normal <$> arbitrary
 
 instance Arbitrary (Prepayment (Int, Int)) where
-  arbitrary = do
-    n1 <- arbitrary
-    n2 <- arbitrary
-    return $ Copy n1 n2
+  arbitrary = Copy <$> arbitrary <*> arbitrary
+
+emptyy :: Prepayment ()
+emptyy = Emptyy
 
 normal :: Int -> Prepayment Int
 normal x = Normal x
-
--- newState :: Int -> Prepayment Int
--- newState x = Normal x
-
--- copyItem :: Prepayment (Int, Int)
--- copyItem = Copy 0 1
 
 copy :: (Int -> Int) -> Prepayment Int -> Prepayment (Int, Int)
 copy f (Normal x) = Copy x (f x)
@@ -46,28 +49,111 @@ confirm (Copy x1 x2) = Normal x2
 cancel :: Prepayment (Int, Int) -> Prepayment Int
 cancel (Copy x1 x2) = Normal x1
 
-newtype PrepaymentState = PrepaymentState Int
-  deriving stock (Show, Eq, Ord)
-  deriving newtype (Arbitrary)
+------------------------------------
+data State = Zero | One | Two
+  deriving stock (Eq, Ord, Show)
 
-data CloneState = CloneState Int Int
-  deriving stock (Show, Eq, Ord)
+instance Arbitrary State where
+  arbitrary = elements [Zero, One, Two]
 
-instance Arbitrary CloneState where
-  arbitrary = return $ CloneState 0 (0 + 1)
+data Transition :: State -> State -> * where
+  AddOne :: Transition Zero One
+  AddTwo :: Transition One Two
+  RemoveTwo :: Transition Two One
+  RemoveOne :: Transition One Zero
 
-empty' :: PrepaymentState
-empty' = PrepaymentState 0
+data StateMachine :: State -> * where
+  Start :: StateMachine Zero
+  Start1 :: StateMachine One
+  Start2 :: StateMachine Two
+  Step :: StateMachine s1 -> Transition s1 s2 -> StateMachine s2
 
-clone' :: PrepaymentState -> CloneState
-clone' (PrepaymentState x) = CloneState x (x + 1)
+zero :: StateMachine Zero
+zero = Start
 
-confirm' :: CloneState -> PrepaymentState
-confirm' (CloneState x1 x2) = PrepaymentState x2
+addOne :: StateMachine Zero -> StateMachine One
+addOne sm = Step sm AddOne
 
-cancel' :: CloneState -> PrepaymentState
-cancel' (CloneState x1 x2) = PrepaymentState x1
+removeOne :: StateMachine One -> StateMachine Zero
+removeOne sm = Step sm RemoveOne
 
+addTwo :: StateMachine One -> StateMachine Two
+addTwo sm = Step sm AddTwo
+
+removeTwo :: StateMachine Two -> StateMachine One
+removeTwo sm = Step sm RemoveTwo
+
+instance Arbitrary (StateMachine Zero) where
+  arbitrary = return zero
+
+instance Arbitrary (StateMachine One) where
+  arbitrary = return Start1
+
+instance Arbitrary (StateMachine Two) where
+  arbitrary = return Start2
+
+instance Observe State Bool (StateMachine Zero) where
+  observe test machine = test == (last $ runStateMachine machine)
+
+instance Observe State Bool (StateMachine One) where
+  observe test machine = test == (last $ runStateMachine machine)
+
+instance Observe State Bool (StateMachine Two) where
+  observe test machine = test == (last $ runStateMachine machine)
+
+runStateMachine :: StateMachine s -> [State]
+runStateMachine Start = [Zero]
+runStateMachine (Step sm AddOne) = runStateMachine sm ++ [One]
+runStateMachine (Step sm AddTwo) = [Two] ++ runStateMachine sm ++ [Two]
+runStateMachine (Step sm RemoveOne) = [Zero] ++ runStateMachine sm ++ [Zero]
+runStateMachine (Step sm RemoveTwo) = [One] ++ runStateMachine sm ++ [One]
+
+main :: IO ()
+main = do
+  let gg = runStateMachine $ addOne $ zero
+  let gg2 = runStateMachine $ removeTwo $ addTwo $ addOne $ zero
+  let gg3 = (last gg) == (last gg2)
+  putStrLn $ show $ last gg
+  putStrLn $ show $ last gg2
+  putStrLn $ show $ gg3
+  quickSpec
+    [ "zero" `con` (zero :: StateMachine Zero),
+      "one" `con` (Start1 :: StateMachine One),
+      "Two" `con` (Start2 :: StateMachine Two),
+      "addOne" `con` (addOne :: StateMachine Zero -> StateMachine One),
+      "removeOne" `con` (removeOne :: StateMachine One -> StateMachine Zero),
+      "addTwo" `con` (addTwo :: StateMachine One -> StateMachine Two),
+      "removeTwo" `con` (removeTwo :: StateMachine Two -> StateMachine One),
+      mono @(State),
+      monoObserve @(StateMachine Zero) @State @Bool,
+      monoObserve @(StateMachine One) @State @Bool,
+      monoObserve @(StateMachine Two) @State @Bool
+      --      ,background [prelude]
+    ]
+
+------------------------------------
+-- data Selector a b
+--  = Left' a b
+--  | Right' a b
+--  | None' a b
+
+-- data Tk a b where
+-- Empti :: Tk (Prepayment ()) (Prepayment ())
+-- One :: Prepayment a -> Tk (Prepayment a) (Prepayment ())
+-- OneSelected :: Prepayment a -> Tk (Prepayment a) (Prepayment ())
+-- Two :: Prepayment a -> Prepayment b -> Tk (Prepayment a) (Prepayment b)
+-- TwoOneSelected :: Prepayment a -> Prepayment b -> Tk (Prepayment a) (Prepayment b)
+-- TwoTwoSelected :: Prepayment a -> Prepayment b -> Tk (Prepayment a) (Prepayment b)
+
+------------------------------------
+
+-- empti :: Tk (Prepayment ()) (Prepayment ())
+-- empti = Empti
+
+-- addOne :: Empty -> TkStateOne
+-- addOne xs = One empty'
+
+{-
 data Empty = Empty
   deriving stock (Show, Eq, Ord)
 
@@ -239,11 +325,13 @@ main2 =
       mono @TkStateTwoTwoSelected,
       mono @TkStateTwoOneSelected
     ]
+    -}
 
-main :: IO ()
-main = do
+main2 :: IO ()
+main2 = do
   quickSpec
-    [ "normal" `con` (normal :: Int -> Prepayment Int),
+    [ "emptyy" `con` (emptyy :: Prepayment ()),
+      "normal" `con` (normal :: Int -> Prepayment Int),
       --     "newState" `con` (newState :: Prepayment Int),
       --      "copyItem" `con` (copyItem :: Prepayment (Int, Int)),
       "copy" `con` (copy :: (Int -> Int) -> Prepayment Int -> Prepayment (Int, Int)),
@@ -251,6 +339,7 @@ main = do
       "cancel" `con` (cancel :: Prepayment (Int, Int) -> Prepayment Int),
       --      predicate "==" $ ((==) :: Prepayment Int -> Prepayment Int -> Bool),
       --     predicate "==" $ ((==) :: Prepayment (Int, Int) -> Prepayment (Int, Int) -> Bool),
+      mono @(Prepayment ()),
       mono @(Prepayment Int),
       mono @(Prepayment (Int, Int)),
       background [prelude]
