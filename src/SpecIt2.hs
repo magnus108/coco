@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
@@ -10,28 +11,62 @@ where
 import QuickSpec
 import Test.QuickCheck
 
-data PrepaymentState
-  = PrepaymentState Int
-  | CloneState Int Int
+data Prepayment a where
+  Normal :: Int -> Prepayment Int
+  Copy :: Int -> Int -> Prepayment (Int, Int)
+
+deriving instance Eq a => Eq (Prepayment a)
+
+deriving instance Ord a => Ord (Prepayment a)
+
+instance Arbitrary (Prepayment Int) where
+  arbitrary = Normal <$> arbitrary
+
+instance Arbitrary (Prepayment (Int, Int)) where
+  arbitrary = do
+    n1 <- arbitrary
+    n2 <- arbitrary
+    return $ Copy n1 n2
+
+normal :: Int -> Prepayment Int
+normal x = Normal x
+
+-- newState :: Int -> Prepayment Int
+-- newState x = Normal x
+
+-- copyItem :: Prepayment (Int, Int)
+-- copyItem = Copy 0 1
+
+copy :: (Int -> Int) -> Prepayment Int -> Prepayment (Int, Int)
+copy f (Normal x) = Copy x (f x)
+
+confirm :: Prepayment (Int, Int) -> Prepayment Int
+confirm (Copy x1 x2) = Normal x2
+
+cancel :: Prepayment (Int, Int) -> Prepayment Int
+cancel (Copy x1 x2) = Normal x1
+
+newtype PrepaymentState = PrepaymentState Int
+  deriving stock (Show, Eq, Ord)
+  deriving newtype (Arbitrary)
+
+data CloneState = CloneState Int Int
   deriving stock (Show, Eq, Ord)
 
-instance Arbitrary PrepaymentState where
-  arbitrary = oneof [return $ PrepaymentState 0, return $ CloneState 0 (0 + 1)]
+instance Arbitrary CloneState where
+  arbitrary = return $ CloneState 0 (0 + 1)
 
 empty' :: PrepaymentState
 empty' = PrepaymentState 0
 
-clone' :: PrepaymentState -> Maybe PrepaymentState
-clone' (PrepaymentState x) = Just $ CloneState x (x + 1)
-clone' _ = Nothing
+clone' :: PrepaymentState -> CloneState
+clone' (PrepaymentState x) = CloneState x (x + 1)
 
-confirm' :: PrepaymentState -> Maybe PrepaymentState
-confirm' (CloneState x1 x2) = Just $ PrepaymentState x2
-confirm' (PrepaymentState x) = Nothing
+confirm' :: CloneState -> PrepaymentState
+confirm' (CloneState x1 x2) = PrepaymentState x2
 
-cancel' :: PrepaymentState -> Maybe PrepaymentState
-cancel' (CloneState x1 x2) = Just $ PrepaymentState x1
-cancel' (PrepaymentState x) = Nothing
+cancel' :: CloneState -> PrepaymentState
+cancel' (CloneState x1 x2) = PrepaymentState x1
 
 data Empty = Empty
   deriving stock (Show, Eq, Ord)
@@ -54,6 +89,10 @@ addTwo (One x) = Two x empty'
 
 selectOne :: TkStateOne -> TkStateOneSelected
 selectOne (One x1) = OneSelected x1
+
+-- editOne :: TkStateOne -> TkStateOne
+-- editOne (One x1) = (\x1' -> One x1') <$> clone' x1
+-- editOne (OneSelected x1) = (\x1' -> OneSelected x1') <$> clone' x1
 
 newtype TkStateOneSelected = OneSelected PrepaymentState
   deriving stock (Show, Eq, Ord)
@@ -169,8 +208,8 @@ confirmTwo (TwoTwoSelected x1 x2) = (\x2' -> TwoTwoSelected x1 x2') <$> confirm'
 confirmTwo _ = Nothing
 -}
 
-main :: IO ()
-main =
+main2 :: IO ()
+main2 =
   quickSpec
     [ "addOne" `con` (addOne :: Empty -> TkStateOne),
       "clearOne" `con` (clearOne :: TkStateOne -> Empty),
@@ -198,6 +237,24 @@ main =
       mono @TkStateOneSelected,
       mono @TkStateTwo,
       mono @TkStateTwoTwoSelected,
-      mono @TkStateTwoOneSelected,
-      withMaxTests 1000
+      mono @TkStateTwoOneSelected
     ]
+
+main :: IO ()
+main = do
+  quickSpec
+    [ "normal" `con` (normal :: Int -> Prepayment Int),
+      --     "newState" `con` (newState :: Prepayment Int),
+      --      "copyItem" `con` (copyItem :: Prepayment (Int, Int)),
+      "copy" `con` (copy :: (Int -> Int) -> Prepayment Int -> Prepayment (Int, Int)),
+      "confirm" `con` (confirm :: Prepayment (Int, Int) -> Prepayment Int),
+      "cancel" `con` (cancel :: Prepayment (Int, Int) -> Prepayment Int),
+      --      predicate "==" $ ((==) :: Prepayment Int -> Prepayment Int -> Bool),
+      --     predicate "==" $ ((==) :: Prepayment (Int, Int) -> Prepayment (Int, Int) -> Bool),
+      mono @(Prepayment Int),
+      mono @(Prepayment (Int, Int)),
+      background [prelude]
+    ]
+
+-- gg = normal == (cancel $ copy (\x -> x + 1) $ normal)
+-- gg2 = newState == (confirm $ copy (\x -> x + 1) $ normal)
