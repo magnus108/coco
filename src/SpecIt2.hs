@@ -14,7 +14,7 @@ where
 import QuickSpec
 import Relude.Unsafe (last)
 import Test.QuickCheck
-import Prelude hiding (Off, On, One, State, last)
+import Prelude hiding (Off, On, One, State, last, mzero)
 
 data Prepayment a where
   Emptyy :: Prepayment ()
@@ -57,83 +57,200 @@ instance Arbitrary State where
   arbitrary = elements [Zero, One, Two]
 
 data Transition :: State -> State -> Type where
-  AddOne :: Transition Zero One
-  AddTwo :: Transition One Two
-  RemoveTwo :: Transition Two One
-  RemoveOne :: Transition One Zero
+  AddOne :: Transition 'Zero 'One
+  AddTwo :: Transition 'One 'Two
+  RemoveTwo :: Transition 'Two 'One
+  RemoveOne :: Transition 'One 'Zero
+
+-- Eq instance
+instance Eq (Transition a b) where
+  AddOne == AddOne = True
+  AddTwo == AddTwo = True
+  RemoveTwo == RemoveTwo = True
+  RemoveOne == RemoveOne = True
+  _ == _ = False
+
+-- Ord instance
+instance Ord (Transition a b) where
+  compare AddOne AddOne = EQ
+  compare AddTwo AddTwo = EQ
+  compare RemoveTwo RemoveTwo = EQ
+  compare RemoveOne RemoveOne = EQ
+  compare AddOne _ = LT
+  compare _ AddOne = GT
+  compare AddTwo _ = LT
+  compare _ AddTwo = GT
+  compare RemoveTwo _ = LT
+  compare _ RemoveTwo = GT
+
+--
+-- Arbitrary instance
+instance Arbitrary (Transition 'Zero 'One) where
+  arbitrary = return AddOne
+
+instance Arbitrary (Transition 'One 'Two) where
+  arbitrary = return AddTwo
+
+instance Arbitrary (Transition 'Two 'One) where
+  arbitrary = return RemoveTwo
+
+instance Arbitrary (Transition 'One 'Zero) where
+  arbitrary = return RemoveOne
+
+ttAddOne :: Transition 'Zero 'One
+ttAddOne = AddOne
+
+ttAddTwo :: Transition 'One 'Two
+ttAddTwo = AddTwo
+
+ttRemoveTwo :: Transition 'Two 'One
+ttRemoveTwo = RemoveTwo
+
+ttRemoveOne :: Transition 'One 'Zero
+ttRemoveOne = RemoveOne
+
+tAddOne :: StateMachine 'Zero -> Transition 'Zero 'One -> StateMachine 'One
+tAddOne x t = Step x t
+
+tAddTwo :: StateMachine 'One -> Transition 'One 'Two -> StateMachine 'Two
+tAddTwo x t = Step x t
+
+tRemoveTwo :: StateMachine 'Two -> Transition 'Two 'One -> StateMachine 'One
+tRemoveTwo x t = Step x t
+
+tRemoveOne :: StateMachine 'One -> Transition 'One 'Zero -> StateMachine 'Zero
+tRemoveOne x t = Step x t
 
 data StateMachine :: State -> Type where
-  Start :: StateMachine Zero
-  Start1 :: StateMachine One
-  Start2 :: StateMachine Two
+  MZero :: StateMachine 'Zero
+  MOne :: StateMachine 'One
+  MTwo :: StateMachine 'Two
   Step :: StateMachine s1 -> Transition s1 s2 -> StateMachine s2
 
-zero :: StateMachine Zero
-zero = Start
+mzero :: StateMachine 'Zero
+mzero = MZero
 
-addOne :: StateMachine Zero -> StateMachine One
+mone :: StateMachine 'One
+mone = MOne
+
+mtwo :: StateMachine 'Two
+mtwo = MTwo
+
+addOne :: StateMachine 'Zero -> StateMachine 'One
 addOne sm = Step sm AddOne
 
-removeOne :: StateMachine One -> StateMachine Zero
+removeOne :: StateMachine 'One -> StateMachine 'Zero
 removeOne sm = Step sm RemoveOne
 
-addTwo :: StateMachine One -> StateMachine Two
+addTwo :: StateMachine 'One -> StateMachine 'Two
 addTwo sm = Step sm AddTwo
 
-removeTwo :: StateMachine Two -> StateMachine One
+removeTwo :: StateMachine 'Two -> StateMachine 'One
 removeTwo sm = Step sm RemoveTwo
 
-instance Arbitrary (StateMachine Zero) where
-  arbitrary = return zero
+instance Eq (StateMachine 'Zero) where
+  (==) x y = (last $ runStateMachine x) == (last $ runStateMachine y)
 
-instance Arbitrary (StateMachine One) where
-  arbitrary = return Start1
+instance Ord (StateMachine 'Zero) where
+  compare x y = compare (last $ runStateMachine x) (last $ runStateMachine y)
 
-instance Arbitrary (StateMachine Two) where
-  arbitrary = return Start2
+instance Eq (StateMachine 'One) where
+  (==) x y = (last $ runStateMachine x) == (last $ runStateMachine y)
 
--- instance Observe State Bool (StateMachine Zero) where
--- observe test machine = traceShowId test == (traceShowId (last $ runStateMachine machine))
+instance Ord (StateMachine 'One) where
+  compare x y = compare (last $ runStateMachine x) (last $ runStateMachine y)
 
--- instance Observe State Bool (StateMachine One) where
--- observe test machine = test == (last $ runStateMachine machine)
+instance Eq (StateMachine 'Two) where
+  (==) x y = (last $ runStateMachine x) == (last $ runStateMachine y)
 
--- instance Observe State Bool (StateMachine Two) where
--- observe test machine = test == (last $ runStateMachine machine)
+instance Ord (StateMachine 'Two) where
+  compare x y = compare (last $ runStateMachine x) (last $ runStateMachine y)
 
-runStateMachine :: StateMachine s -> [State]
-runStateMachine Start = [Zero]
-runStateMachine Start1 = [One]
-runStateMachine Start2 = [Two]
+instance Arbitrary (StateMachine 'Zero) where
+  arbitrary = return mzero
+
+instance Arbitrary (StateMachine 'One) where
+  arbitrary = return mone
+
+instance Arbitrary (StateMachine 'Two) where
+  arbitrary = return mtwo
+
+runStateMachine :: StateMachine a -> [State]
+runStateMachine MZero = [Zero]
+runStateMachine MOne = [One]
+runStateMachine MTwo = [Two]
 runStateMachine (Step sm AddOne) = runStateMachine sm ++ [One]
 runStateMachine (Step sm AddTwo) = runStateMachine sm ++ [Two]
 runStateMachine (Step sm RemoveOne) = runStateMachine sm ++ [Zero]
 runStateMachine (Step sm RemoveTwo) = runStateMachine sm ++ [One]
 
+data AnyStateMachine = forall a. AnyStateMachine (StateMachine a)
+
+runAnyStateMachine :: AnyStateMachine -> [State]
+runAnyStateMachine (AnyStateMachine sm) = runStateMachine sm
+
+toAnyStateMachine :: StateMachine a -> AnyStateMachine
+toAnyStateMachine = AnyStateMachine
+
+instance Arbitrary AnyStateMachine where
+  arbitrary =
+    elements
+      [ AnyStateMachine MZero,
+        AnyStateMachine MOne,
+        AnyStateMachine MTwo
+      ]
+
+instance Eq AnyStateMachine where
+  sm1 == sm2 = (runAnyStateMachine sm1) == (runAnyStateMachine sm2)
+
+instance Ord AnyStateMachine where
+  compare sm1 sm2 = compare (runAnyStateMachine sm1) (runAnyStateMachine sm2)
+
 main :: IO ()
 main = do
-  let gg = runStateMachine $ addOne $ zero
-  let gg2 = runStateMachine $ removeTwo $ addTwo $ addOne $ zero
+  putStrLn $ show $ (addOne mzero) == (removeTwo $ addTwo $ addOne $ mzero)
+  let gg = runStateMachine $ addOne $ mzero
+  let gg2 = runStateMachine $ removeTwo $ addTwo $ addOne $ mzero
   let gg3 = (last gg) == (last gg2)
   putStrLn $ show $ gg
   putStrLn $ show $ gg2
   putStrLn $ show $ gg3
   quickSpec
-    [ "zero" `con` (zero :: StateMachine Zero),
-      "one" `con` (Start1 :: StateMachine One),
-      "Two" `con` (Start2 :: StateMachine Two),
-      "addOne" `con` (addOne :: StateMachine Zero -> StateMachine One),
-      "removeOne" `con` (removeOne :: StateMachine One -> StateMachine Zero),
-      "addTwo" `con` (addTwo :: StateMachine One -> StateMachine Two),
-      "removeTwo" `con` (removeTwo :: StateMachine Two -> StateMachine One),
-      "runStateMachine" `con` (last . runStateMachine :: StateMachine Zero -> State),
-      "runStateMachine" `con` (last . runStateMachine :: StateMachine One -> State),
-      "runStateMachine" `con` (last . runStateMachine :: StateMachine Two -> State),
-      mono @(State)
-      -- ,  monoObserve @(StateMachine Zero) @State @Bool,
-      --   monoObserve @(StateMachine One) @State @Bool,
-      --    monoObserve @(StateMachine Two) @State @Bool
-      --      ,background [prelude]
+    [ "mzero" `con` (mzero :: StateMachine 'Zero),
+      "mone" `con` (mone :: StateMachine 'One),
+      "mtwo" `con` (mtwo :: StateMachine 'Two),
+      con "zero" (Zero :: State),
+      con "one" (One :: State),
+      con "two" (Two :: State),
+      con "eq" ((==) :: State -> State -> Bool),
+      con "eq" ((==) :: StateMachine 'Zero -> StateMachine 'Zero -> Bool),
+      con "eq" ((==) :: StateMachine 'One -> StateMachine 'One -> Bool),
+      con "eq" ((==) :: StateMachine 'Two -> StateMachine 'Two -> Bool),
+      instances = [baseType (undefined::StateMachine)],
+      con "ttAddone" (ttAddOne :: Transition 'Zero 'One),
+      con "ttAddTwo" (ttAddTwo :: Transition 'One 'Two),
+      con "ttRemoveTwo" (ttRemoveTwo :: Transition 'Two 'One),
+      con "ttRemoveOne" (ttRemoveOne :: Transition 'One 'Zero),
+      --
+      --
+      con "tAddOne" (tAddOne :: StateMachine 'Zero -> Transition 'Zero 'One -> StateMachine 'One),
+      con "tAddTwo" (tAddTwo :: StateMachine 'One -> Transition 'One 'Two -> StateMachine 'Two),
+      con "tRemoveTwo" (tRemoveTwo :: StateMachine 'Two -> Transition 'Two 'One -> StateMachine 'One),
+      con "tRemoveOne" (tRemoveOne :: StateMachine 'One -> Transition 'One 'Zero -> StateMachine 'Zero),
+      -- con "toAnyStateMachine" (liftC @(State A) $ toAnyStateMachine :: StateMachine A -> AnyStateMachine),
+      --      con "runAnyStateMachine" $ (last . runAnyStateMachine :: AnyStateMachine -> State),
+      con "runStateMachine" $ (last . runStateMachine :: StateMachine 'Zero -> State),
+      con "runStateMachine" $ (last . runStateMachine :: StateMachine 'One -> State),
+      con "runStateMachine" $ (last . runStateMachine :: StateMachine 'Two -> State),
+      --
+      mono @(State),
+      mono @(Transition 'Zero 'One),
+      mono @(Transition 'One 'Zero),
+      mono @(Transition 'One 'Two),
+      mono @(Transition 'Two 'One),
+      mono @(StateMachine 'Zero),
+      mono @(StateMachine 'One),
+      mono @(StateMachine 'Two)
     ]
 
 ------------------------------------
