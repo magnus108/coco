@@ -6,6 +6,9 @@ version: 1.0.0.0
 common common-all
     build-depends:
         base >=4.7 && <5,
+        network <3,
+        stm,
+        async,
         --speculate,
         quickspec,
         --binary,
@@ -22,6 +25,7 @@ common common-all
         containers,
         QuickCheck,
         quickcheck-instances,
+        breakpoint,
         --adjunctions,
         --async,
         --monad-loops,
@@ -42,6 +46,7 @@ common common-all
         Piece
         SpecIt
         SpecIt2
+        Server
         --Stm
         --ListZipper
         --Conwayy
@@ -88,7 +93,7 @@ library
 executable kata
     import: common-all
     main-is: Main.hs
-    ghc-options: -eventlog -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -fplugin=Debug.Breakpoint -eventlog -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs: app, src
 
 test-suite kata-test
