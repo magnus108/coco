@@ -17,7 +17,7 @@ import QuickSpec
 import Relude.Unsafe (last)
 import Test.QuickCheck
 import Text.Show (Show (..), show)
-import Prelude hiding (Off, On, One, Show, State, last, mzero, show)
+import Prelude hiding (Down, Off, On, One, Show, State, Up, last, mzero, show)
 
 data Prepayment a where
   Emptyy :: Prepayment ()
@@ -415,6 +415,7 @@ main2 =
     ]
     -}
 
+{-
 main2 :: IO ()
 main2 = do
   breakpointIO
@@ -547,4 +548,54 @@ main = do
       mono @(HasShow),
       mono @(StateMachine 'Zero),
       mono @(StateMachine 'One)
+    ]
+-}
+
+data Floor = Floor1 | Floor2 | Floor3
+  deriving (Show, Eq, Ord)
+
+instance Arbitrary Floor where
+  arbitrary = elements [Floor1, Floor2, Floor3]
+
+data Transition = Up | Down
+  deriving (Show, Eq, Ord)
+
+instance Arbitrary Transition where
+  arbitrary = elements [Up, Down]
+
+data ElevatorError = LowestFloor | HighestFloor
+  deriving (Show, Eq, Ord)
+
+instance Arbitrary ElevatorError where
+  arbitrary = elements [LowestFloor, HighestFloor]
+
+moveElevator :: Floor -> Transition -> Either ElevatorError Floor
+moveElevator Floor1 Up = Right Floor2
+moveElevator Floor1 Down = Left LowestFloor
+moveElevator Floor2 Up = Right Floor3
+moveElevator Floor2 Down = Right Floor1
+moveElevator Floor3 Up = Left HighestFloor
+moveElevator Floor3 Down = Right Floor2
+
+bindEither :: Transition -> Either ElevatorError Floor -> Either ElevatorError Floor
+bindEither _ (Left err) = Left err
+bindEither f (Right val) = moveElevator val f
+
+up :: Either ElevatorError Floor -> Either ElevatorError Floor
+up = bindEither Up
+
+down :: Either ElevatorError Floor -> Either ElevatorError Floor
+down = bindEither Down
+
+initialFloor :: Either ElevatorError Floor
+initialFloor = Right Floor1
+
+main :: IO ()
+main = do
+  quickSpec
+    [ con "initialFloor" (initialFloor :: Either ElevatorError Floor),
+      con "up" (up :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      con "down" (down :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      mono @(Floor),
+      mono @(ElevatorError)
     ]
