@@ -9,4 +9,4 @@ import qualified SpecIt2
 
 main :: IO ()
 main = do
-  Server.main
+  SpecIt2.main

@@ -259,7 +259,7 @@ receive h c = forever $ do
 server :: Handle -> TVar Integer -> TChan String -> IO ()
 server h factor c = do
   f <- atomically $ readTVar factor
-  hPrintf h "current factor: $d\n" f
+  hPrintf h "current factor: %d\n" f
   loop f
   where
     loop f = do
@@ -273,7 +273,7 @@ server h factor c = do
       action
 
     newfactor f = do
-      hPrintf h "new factor : $d\n" f
+      hPrintf h "new factor : %d\n" f
       loop f
 
     command f s = case s of

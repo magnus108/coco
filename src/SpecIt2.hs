@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -15,7 +16,8 @@ import Debug.Breakpoint
 import QuickSpec
 import Relude.Unsafe (last)
 import Test.QuickCheck
-import Prelude hiding (Off, On, One, State, last, mzero)
+import Text.Show (Show (..), show)
+import Prelude hiding (Off, On, One, Show, State, last, mzero, show)
 
 data Prepayment a where
   Emptyy :: Prepayment ()
@@ -446,6 +448,9 @@ data StateMachine (s :: Symbol) where
   OneState :: StateMachine 'One
   Step :: StateMachine s1 -> Transition s1 s2 -> StateMachine s2
 
+instance Show (StateMachine a) where
+  show sm = show $ runStateMachine sm
+
 instance Eq (StateMachine a) where
   sm1 == sm2 = runStateMachine sm1 == runStateMachine sm2
 
@@ -471,6 +476,36 @@ instance Arbitrary HiddenStateMachine where
 
 hide :: StateMachine s -> HiddenStateMachine
 hide = Hidden
+
+elim :: (forall a. Ord a => a -> r) -> HiddenStateMachine -> r
+elim f (Hidden s) = f s
+
+data HasShow where
+  HasShow :: Show t => t -> HasShow
+
+instance Show HasShow where
+  show (HasShow s) = show s
+
+elimHasShow :: (forall a. Show a => a -> r) -> HasShow -> r
+elimHasShow f (HasShow a) = f a
+
+lol :: forall a. Show a => a -> HasShow
+lol x = HasShow x
+
+tt :: HasShow -> String
+tt = elimHasShow (show)
+
+instance Arbitrary HasShow where
+  arbitrary = elements [lol mzero, lol mone, lol $ addOne mzero, lol $ removeOne mone]
+
+instance Eq HasShow where
+  sm1 == sm2 = tt sm1 == tt sm2
+
+instance Ord HasShow where
+  compare a b = compare (tt a) (tt b)
+
+-- gg :: HiddenStateMachine -> Symbol
+-- gg s = elim (runStateMachine) s
 
 reveal :: HiddenStateMachine -> Either (StateMachine 'Zero) (StateMachine 'One)
 reveal (Hidden s) = case runStateMachine s of
@@ -502,20 +537,14 @@ runStateMachine (Step sm RemoveOne) = runStateMachine sm
 main :: IO ()
 main = do
   putStrLn "lol"
-  putStrLn $ show $ (reveal (hide (addOne mzero)) == (reveal (hide (addOne (removeOne (addOne mzero))))))
   quickSpec
     [ con "mzero" (mzero :: StateMachine 'Zero),
       con "mone" (mone :: StateMachine 'One),
       con "addOne" (addOne :: StateMachine 'Zero -> StateMachine 'One),
       con "removeOne" (removeOne :: StateMachine 'One -> StateMachine 'Zero),
-      con "hideZ" (hide :: StateMachine 'Zero -> HiddenStateMachine),
-      con "hideO" (hide :: StateMachine 'One -> HiddenStateMachine),
-      con "revel" (reveal :: HiddenStateMachine -> Either (StateMachine 'Zero) (StateMachine 'One)),
-      con "run1" (runStateMachine :: StateMachine 'Zero -> Symbol),
-      con "run2" (runStateMachine :: StateMachine 'One -> Symbol),
-      mono @(Symbol),
+      con "elim" $ (tt :: HasShow -> String),
+      con "lol" $ liftC @(Show A) $ (lol :: A -> HasShow),
+      mono @(HasShow),
       mono @(StateMachine 'Zero),
-      mono @(StateMachine 'One),
-      mono @(HiddenStateMachine),
-      mono @(Either (StateMachine 'Zero) (StateMachine 'One))
+      mono @(StateMachine 'One)
     ]
