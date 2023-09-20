@@ -590,12 +590,37 @@ down = bindEither Down
 initialFloor :: Either ElevatorError Floor
 initialFloor = Right Floor1
 
+is1Floor :: Either ElevatorError Floor -> Bool
+is1Floor x = Right Floor1 == x
+
+is2Floor :: Either ElevatorError Floor -> Bool
+is2Floor x = Right Floor2 == x
+
+is3Floor :: Either ElevatorError Floor -> Bool
+is3Floor x = Right Floor3 == x
+
+transform :: [Transition] -> Floor -> Either ElevatorError Floor
+transform xs x = foldlM (\f t -> bindEither t (Right f)) x xs
+
 main :: IO ()
 main = do
   quickSpec
-    [ con "initialFloor" (initialFloor :: Either ElevatorError Floor),
-      con "up" (up :: Either ElevatorError Floor -> Either ElevatorError Floor),
-      con "down" (down :: Either ElevatorError Floor -> Either ElevatorError Floor),
+    [ -- con "up" (up :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      -- con "down" (down :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      con "transform" (transform :: [Transition] -> Floor -> Either ElevatorError Floor),
+      -- con "up" (up :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      -- con "down" (down :: Either ElevatorError Floor -> Either ElevatorError Floor),
+      background
+        [ -- con "lowestFloor" $ (Left LowestFloor :: Either ElevatorError Floor),
+          -- con "highestFloor" $ (Left HighestFloor :: Either ElevatorError Floor),
+          con "up" $ (Up :: Transition),
+          con "down" $ (Down :: Transition),
+          con "floor1" $ (Floor1 :: Floor),
+          con "floor2" $ (Floor2 :: Floor),
+          con "floor3" $ (Floor3 :: Floor),
+          prelude
+        ],
       mono @(Floor),
+      mono @(Transition),
       mono @(ElevatorError)
     ]
