@@ -3,10 +3,12 @@ module Piece
   )
 where
 
+import qualified Account
+import qualified Db
 import qualified Server
 import qualified SpecIt
 import qualified SpecIt2
 
 main :: IO ()
 main = do
-  SpecIt2.main
+  Account.main

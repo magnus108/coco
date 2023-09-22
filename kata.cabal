@@ -26,6 +26,8 @@ common common-all
         QuickCheck,
         quickcheck-instances,
         breakpoint,
+        operational,
+        sqlite-simple,
         --adjunctions,
         --async,
         --monad-loops,
@@ -36,6 +38,8 @@ common common-all
         --criterion
     other-modules:
         --Yoneda
+        Account
+        Db
         --Par
         --PrintInOrder
         --SeqFileRead
