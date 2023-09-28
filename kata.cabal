@@ -9,6 +9,8 @@ common common-all
         network <3,
         stm,
         async,
+        aeson,
+        threepenny-gui,
         --speculate,
         quickspec,
         --binary,
@@ -28,7 +30,9 @@ common common-all
         breakpoint,
         operational,
         sqlite-simple,
-        --adjunctions,
+        servant,
+        plots,
+        --,-adjunctions,
         --async,
         --monad-loops,
         --stm,
@@ -108,8 +112,8 @@ test-suite kata-test
     other-modules:
     hs-source-dirs:
         src
-        --, test
-    --build-depends:
-        --, tasty
-        --, tasty-hunit
-        --, tasty-quickcheck
+        , test
+    build-depends:
+        , tasty
+        , tasty-hunit
+        , tasty-quickcheck

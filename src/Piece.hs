@@ -11,4 +11,4 @@ import qualified SpecIt2
 
 main :: IO ()
 main = do
-  Account.main
+  Db.main
